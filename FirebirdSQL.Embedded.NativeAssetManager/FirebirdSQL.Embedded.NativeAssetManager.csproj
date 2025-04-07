@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <Nullable>enable</Nullable>
+        <AssemblyName>FirebirdDb.Embedded.NativeAssetManager</AssemblyName>
+        <RootNamespace>FirebirdSql.Embedded</RootNamespace>
+        <CurrentVersion>1.0.1</CurrentVersion>
+        <AssemblyVersion>$(CurrentVersion).0</AssemblyVersion>
+        <FileVersion>$(CurrentVersion).0</FileVersion>
+        <EnableDefaultCompileItems>False</EnableDefaultCompileItems>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <IsPackable>True</IsPackable>
+        <PackageId>FirebirdDb.Embedded.NativeAssetManager</PackageId>
+        <GeneratePackageOnBuild Condition=" '$(Configuration)' == 'Release' ">true</GeneratePackageOnBuild>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <Version>$(CurrentVersion)</Version>
+        <Title>FirebirdSQL embedded native asset manager</Title>
+        <Authors>JakeSays</Authors>
+        <Description>Provides support for resolving the firebird sql embedded native library path at runtime. This package is a dependency of the native packages and does not need to be referenced directly.</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageTags>firebird firebirdsql native sql embedded standalone firebirdsql.data.client</PackageTags>
+        <PackageVersion>$(CurrentVersion)</PackageVersion>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <IncludeBuildOutput>true</IncludeBuildOutput>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <Compile Include="FbNativeAssetManager.cs"/>
+        <Compile Include="../FirebirdPackageBuilder/FirebirdVersion.cs">
+            <Link>FirebirdVersion.cs</Link>
+        </Compile>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="/"/>
+        <None Include="LICENSE.txt" Pack="true" PackagePath="/"/>
+        <None Include="icon.png" Pack="true" PackagePath="/"/>
+    </ItemGroup>
+</Project>

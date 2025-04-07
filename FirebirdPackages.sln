@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FirebirdPackageBuilder", "FirebirdPackageBuilder\FirebirdPackageBuilder.csproj", "{3FD1EF54-FC4A-4CAD-B07F-A4F4B558CEBB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageTester", "PackageTester\PackageTester.csproj", "{3C6187ED-21BE-4EF2-94F8-49F16719E6DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FirebirdSQL.Embedded.NativeAssetManager", "FirebirdSQL.Embedded.NativeAssetManager\FirebirdSQL.Embedded.NativeAssetManager.csproj", "{EA00033A-5F10-4AAB-A9CC-4FE94A3AA0D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Std.CommandLine", "Std.CommandLine\Std.CommandLine.csproj", "{5E5FDB3E-A1D5-498A-971B-41DF6F0C1008}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3FD1EF54-FC4A-4CAD-B07F-A4F4B558CEBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FD1EF54-FC4A-4CAD-B07F-A4F4B558CEBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FD1EF54-FC4A-4CAD-B07F-A4F4B558CEBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FD1EF54-FC4A-4CAD-B07F-A4F4B558CEBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C6187ED-21BE-4EF2-94F8-49F16719E6DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C6187ED-21BE-4EF2-94F8-49F16719E6DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C6187ED-21BE-4EF2-94F8-49F16719E6DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C6187ED-21BE-4EF2-94F8-49F16719E6DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA00033A-5F10-4AAB-A9CC-4FE94A3AA0D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA00033A-5F10-4AAB-A9CC-4FE94A3AA0D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA00033A-5F10-4AAB-A9CC-4FE94A3AA0D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA00033A-5F10-4AAB-A9CC-4FE94A3AA0D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E5FDB3E-A1D5-498A-971B-41DF6F0C1008}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E5FDB3E-A1D5-498A-971B-41DF6F0C1008}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E5FDB3E-A1D5-498A-971B-41DF6F0C1008}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E5FDB3E-A1D5-498A-971B-41DF6F0C1008}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

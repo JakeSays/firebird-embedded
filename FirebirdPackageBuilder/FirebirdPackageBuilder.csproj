@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <AssemblyName>package-builder</AssemblyName>
+        <RootNamespace>Std.FirebirdEmbedded.Tools</RootNamespace>
+        <DefineConstants>$(DefineConstants);FB_PACKAGE_BUILDER</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="NuGet.Packaging" Version="6.13.2"/>
+        <PackageReference Include="Octokit" Version="14.0.0"/>
+        <PackageReference Include="Std.TextTemplating.SourceGenerator" Version="1.0.8" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="Templates/nuspec.tt"/>
+        <AdditionalFiles Include="Templates\ReadmeTemplate.tt"/>
+        <AdditionalFiles Include="Templates\TargetFileTemplate.tt"/>
+        <None Remove="Templates\AssetTargetFileTemplate.tt"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Std.CommandLine\Std.CommandLine.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="Templates\NuspecTemplate.tt"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="LICENSES.txt"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="Templates\NuspecTemplate.cs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Assets\LICENSES.txt" />
+    </ItemGroup>
+</Project>

@@ -1,0 +1,19 @@
+<#@ template language="C#" visibility="internal" #>
+<#@ parameter name="FbVersion" type="System.String"#>
+<#@ parameter name="Platform" type="System.String"#>
+<#@ parameter name="Architecture" type="System.String[]"#>
+<#@ parameter name="Content" type="System.String"#>
+<#@ class name="ReadmeTemplate"#>
+<#@ namespace name="Std.FirebirdEmbedded.Tools.Templates"#>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+
+<# if (Architecture.Length == 1) { #>
+This is the binary package for Firebird Embedded version <#= FbVersion #>, <#= Platform #> <#= Architecture[0] #>.
+<# } else { #>
+This is the binary package for Firebird Embedded version <#= FbVersion #>, <#= Platform #> <#= string.Join(", ", Architecture) #>.
+<# } #>
+
+Release notes summary:
+
+<#= Content #>

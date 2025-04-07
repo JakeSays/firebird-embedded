@@ -1,0 +1,87 @@
+<#@ template language="C#" visibility="internal" #>
+<#@ class name="TargetFileTemplate" #>
+<#@ namespace name="Std.FirebirdEmbedded.Tools.Templates" #>
+<#@ parameter name="Assets" type="Std.FirebirdEmbedded.Tools.FirebirdAsset[]" #>
+<#@ parameter name="Release" type="Std.FirebirdEmbedded.Tools.FirebirdRelease" #>
+<#@ import namespace="Std.FirebirdEmbedded.Tools" #>
+<#@ import namespace="System.Collections.Generic" #>
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask
+          TaskName="CopyFirebirdBinaries"
+          TaskFactory="RoslynCodeTaskFactory"
+          AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll" >
+    <ParameterGroup>
+      <SourceDir ParameterType="System.String" Required="True"/>
+      <OutputDir ParameterType="System.String" Required="True"/>
+      <Rid ParameterType="System.String" Required="true"/>
+      <Publishing ParameterType="System.Boolean" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System"/>
+      <Using Namespace="System.IO"/>
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+      const string licenseFile = "LICENSES.txt";
+
+      var licenseSource = Path.Combine(SourceDir, "..", licenseFile);
+
+      SourceDir = Path.Combine(SourceDir, Rid);
+      OutputDir = Path.Combine(OutputDir, Publishing ? "firebird" : Rid);
+
+      var files = Directory.GetFiles(SourceDir, "*", SearchOption.AllDirectories);
+
+      var sourceDirLength = SourceDir.Length + 1;
+
+      foreach(var file in files)
+      {
+          var relativeDest = file.Substring(sourceDirLength);
+          var destPath = Path.Combine(OutputDir, relativeDest);
+
+          Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
+          File.Copy(file, destPath, true);
+      }
+
+      var licenseDest = Path.Combine(OutputDir, "<#= Release.Version #>", licenseFile);
+      File.Copy(licenseSource, licenseDest, true);
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+<# var includeProperty = $"IncludeFirebird{Release.Version}NativeAssets";#>
+  <PropertyGroup>
+    <<#= includeProperty #> Condition=" '$(<#= includeProperty #>)' == '' ">True</<#= includeProperty#>>
+  </PropertyGroup>
+<#
+  foreach (var asset in Assets)
+  {
+#>
+
+  <Target Name="CleanFirebirdBinaries<#= asset.PropertySuffix #>" BeforeTargets="Clean">
+    <RemoveDir Directories="$(TargetDir)/<#= asset.Rid #>"/>
+  </Target>
+
+  <Target Name="CopyFirebird<#= asset.PropertySuffix #>" BeforeTargets="Compile">
+    <PropertyGroup>
+      <_DoCopy<#= asset.PropertySuffix #> Condition="('$(RuntimeIdentifier)' == '' or '$(RuntimeIdentifier)' == '<#= asset.Rid #>') and '$(<#= includeProperty #>)' != 'False'">True</_DoCopy<#= asset.PropertySuffix #>>
+    </PropertyGroup>
+
+    <CopyFirebirdBinaries
+            Condition="'$(_DoCopy<#= asset.PropertySuffix #>)' == 'True'"
+            SourceDir="$(MSBuildThisFileDirectory)../../content" OutputDir="$(TargetDir)" Rid="<#= asset.Rid #>"/>
+  </Target>
+
+  <Target Name="PublishFirebird<#= asset.PropertySuffix #>" BeforeTargets="Publish">
+    <PropertyGroup>
+      <_DoPublish<#= asset.PropertySuffix #> Condition="('$(RuntimeIdentifier)' == '' or '$(RuntimeIdentifier)' == '<#= asset.Rid #>') and '$(<#= includeProperty #>)' != 'False'">True</_DoCopy<#= asset.PropertySuffix #>>
+    </PropertyGroup>
+
+    <CopyFirebirdBinaries
+            Condition="'$(_DoPublish<#= asset.PropertySuffix #>)' == 'True'"
+            SourceDir="$(MSBuildThisFileDirectory)../../content" OutputDir="$(PublishDir)" Rid="<#= asset.Rid #>"/>
+  </Target>
+<#
+  }
+#>
+</Project>
