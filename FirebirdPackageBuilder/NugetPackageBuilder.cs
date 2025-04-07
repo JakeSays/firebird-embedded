@@ -80,7 +80,10 @@ internal sealed class NugetPackageBuilder
             foreach (var asset in assets)
             {
                 var contentRoot = MakeAssetPath(asset);
-                var files = asset.NugetFiles.Where(a => !a.SourcePath.EndsWith("LICENSES.txt")).ToList();
+                var files = asset.NugetFiles
+                    .Where(a => !a.SourcePath.EndsWith(PackageStructureBuilder.LicenseFileName))
+                    .Where(a => !a.SourcePath.EndsWith(PackageStructureBuilder.IconFileName))
+                    .ToList();
                 AddNugetFiles(builder, contentRoot, files, asset.PackageRootDirectory);
             }
 
@@ -259,6 +262,7 @@ internal sealed class NugetPackageBuilder
             ProjectUrl = new Uri("https://github.com/jakesays/firebird-embedded"),
             Copyright = $"(c) {DateTime.Now.Year} Jake Helfert",
             Readme = "README.md",
+            Icon = "icon.png"
         };
 
         return builder;

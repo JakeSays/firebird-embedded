@@ -6,9 +6,12 @@ namespace Std.FirebirdEmbedded.Tools;
 
 internal sealed class PackageStructureBuilder
 {
-    private const string LicenseFileName = "LICENSES.txt";
+    public const string LicenseFileName = "LICENSES.txt";
+    public const string IconFileName = "icon.png";
     private readonly string _licenseFileText = ManifestResourceManager.ReadStringResource(LicenseFileName)
         ?? throw new InvalidOperationException("License file resource not found.");
+    private readonly byte[] _iconBytes = ManifestResourceManager.ReadBinaryResource(IconFileName)
+        ?? throw new InvalidOperationException("Icon file resource not found.");
 
     private readonly Configuration _config;
 
@@ -37,6 +40,8 @@ internal sealed class PackageStructureBuilder
 
             CopyLicenses(release.LinuxPackage.NugetFiles, release.LinuxPackage.PackageRootDirectory);
             CopyLicenses(release.WindowsPackage.NugetFiles, release.WindowsPackage.PackageRootDirectory);
+            CopyIcon(release.LinuxPackage.NugetFiles, release.LinuxPackage.PackageRootDirectory);
+            CopyIcon(release.WindowsPackage.NugetFiles, release.WindowsPackage.PackageRootDirectory);
 
             return true;
         }
@@ -65,6 +70,9 @@ internal sealed class PackageStructureBuilder
         }
 
         IoHelpers.RecreateDirectory(asset.PackageRootDirectory);
+
+        CopyLicenses(asset.NugetFiles, asset.PackageRootDirectory);
+        CopyIcon(asset.NugetFiles, asset.PackageRootDirectory);
 
         switch (version)
         {
@@ -120,6 +128,19 @@ internal sealed class PackageStructureBuilder
         nugetFiles.Add(new NugetFile(NugetDestination.Content, LicenseFileName));
     }
 
+    private void CopyIcon(List<NugetFile> nugetFiles, string destRootDirectory)
+    {
+        var destPath = Path.Combine(destRootDirectory, IconFileName);
+
+        if (Configuration.IsNaggy)
+        {
+            StdOut.DarkGreenLine($"Writing icon file to '{destPath}'");
+        }
+
+        File.WriteAllBytes(destPath, _iconBytes);
+        nugetFiles.Add(new NugetFile(NugetDestination.Content, IconFileName));
+    }
+
     private void CopyTzData(FirebirdAsset asset, string destRootDirectory)
     {
         CopyFile(asset, "tzdata/metaZones.res", destRootDirectory);
@@ -133,7 +154,6 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "lib/libib_util.so", destRootDirectory);
         CopyFile(asset, "lib/libfbclient.so.2", destRootDirectory);
         CopyFile(asset, "plugins/libEngine12.so", destRootDirectory);
-        CopyLicenses(asset.NugetFiles, destRootDirectory);
     }
 
     private void CreateV4LinuxStructure(FirebirdAsset asset, string destRootDirectory)
@@ -144,7 +164,6 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "plugins/libEngine13.so", destRootDirectory);
 
         CopyTzData(asset, destRootDirectory);
-        CopyLicenses(asset.NugetFiles, destRootDirectory);
     }
 
     private void CreateV5LinuxStructure(FirebirdAsset asset, string destRootDirectory)
@@ -155,7 +174,6 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "plugins/libEngine13.so", destRootDirectory);
 
         CopyTzData(asset, destRootDirectory);
-        CopyLicenses(asset.NugetFiles, destRootDirectory);
     }
 
     private void CreateV3WindowsStructure(FirebirdAsset asset, string destRootDirectory)
@@ -170,8 +188,6 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "msvcr100.dll", destRootDirectory);
         CopyFile(asset, "zlib1.dll", destRootDirectory);
         CopyFile(asset, "plugins/engine12.dll", destRootDirectory);
-
-        CopyLicenses(asset.NugetFiles, destRootDirectory);
     }
 
     private void CreateV4WindowsStructure(FirebirdAsset asset, string destRootDirectory)
@@ -190,7 +206,6 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "tzdata/ids.dat", destRootDirectory);
 
         CopyTzData(asset, destRootDirectory);
-        CopyLicenses(asset.NugetFiles, destRootDirectory);
     }
 
     private void CreateV5WindowsStructure(FirebirdAsset asset, string destRootDirectory)
@@ -215,6 +230,5 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "tzdata/ids.dat", destRootDirectory);
 
         CopyTzData(asset, destRootDirectory);
-        CopyLicenses(asset.NugetFiles, destRootDirectory);
     }
 }
