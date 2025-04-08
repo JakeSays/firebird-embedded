@@ -115,7 +115,7 @@ public static class FbNativeAssetManager
         [In]
         IntPtr hModule,
 
-        [Out]
+        [Out, MarshalAs(UnmanagedType.LPWStr)]
         StringBuilder lpFilename,
 
         [In]
