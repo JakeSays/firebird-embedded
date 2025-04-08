@@ -6,12 +6,7 @@ using JetBrains.Annotations;
 
 namespace Std.CommandLine.Utility;
 
-#if UTILITY_INTERNAL
-internal
-#else
-	public 
-#endif
-	static class StringExtensions
+internal static class StringExtensions
 {
 	[ContractAnnotation("value:null => true"), MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool NotUseful(this string? value)
@@ -92,7 +87,7 @@ internal
 
 	public static string[] Trim(this string[] value)
 	{
-        ArgumentNullException.ThrowIfNull(value);
+        Guard.NotNull(value, nameof(value));
 
         for (var idx = 0; idx < value.Length; idx++)
 		{
@@ -132,7 +127,7 @@ internal
 
 	public static string? Substring(this string value, string leftDelimiter, string rightDelimiter)
 	{
-        ArgumentNullException.ThrowIfNull(value);
+		Guard.NotNull(value, nameof(value));
 
         var startPos = 0;
 		var endPos = 0;
@@ -194,8 +189,8 @@ internal
 			return "";
 		}
 
-		return src.StartsWith(prefix, comparison) 
-			? src[prefix.Length..] 
+		return src.StartsWith(prefix, comparison)
+			? src[prefix.Length..]
 			: src;
 	}
 
@@ -230,7 +225,7 @@ internal
 			return null;
 		}
 
-        ArgumentOutOfRangeException.ThrowIfNegative(maxLength);
+		Guard.GreaterEqual(maxLength, 0, nameof(maxLength));
 
         if (src.Length == 0 ||
 		    src.Length == maxLength)
@@ -253,8 +248,8 @@ internal
         //lifted from: http://www.blackbeltcoder.com/Articles/strings/implementing-word-wrap-in-email-messages
         //and improved
 
-        ArgumentNullException.ThrowIfNull(text);
-        ArgumentOutOfRangeException.ThrowIfLessThan(width, 1);
+        Guard.NotNull(text, nameof(text));
+        Guard.GreaterEqual(width, 1, nameof(width));
 
         int pos, next;
 		var sb = new StringBuilder();
@@ -344,8 +339,8 @@ internal
 	/// <returns>List of lines.</returns>
 	public static List<string> BreakIntoLines(string text, int width)
 	{
-        ArgumentNullException.ThrowIfNull(text);
-        ArgumentOutOfRangeException.ThrowIfLessThan(width, 1);
+		Guard.NotNull(text, nameof(text));
+		Guard.GreaterEqual(width, 1, nameof(width));
 
         var pos = 0;
 		var eol = text.Length;
@@ -384,7 +379,7 @@ internal
 
 	private static string FormatName(string source, bool isPascalCase)
 	{
-        ArgumentNullException.ThrowIfNull(source);
+		Guard.NotNull(source, nameof(source));
 
         if (source.Length == 0)
 		{

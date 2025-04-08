@@ -19,7 +19,7 @@ namespace Std.CommandLine.Utility
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		[AssertionMethod]
 		public static TValue NotNull<TValue>([AssertionCondition(AssertionConditionType.IS_NOT_NULL)]
-			TValue arg,
+			TValue? arg,
 			[InvokerParameterName] string argName)
 		where TValue : class
 		{

@@ -5,17 +5,12 @@ using System.Reflection;
 
 namespace Std.CommandLine.Utility;
 
-#if REFLECTION_INTERNAL
-internal
-#else
-public
-#endif
-static class TypeSystemExtensions
+internal static class TypeSystemExtensions
 {
     public static MethodInfo? GetStaticMethod(this Type type, string methodName)
     {
-        ArgumentNullException.ThrowIfNull(type);
-        ArgumentException.ThrowIfNullOrEmpty(methodName);
+        Guard.NotNull(type, nameof(type));
+        Guard.NotNullOrEmpty(methodName, nameof(methodName));
 
         var method = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
         return method;
@@ -23,14 +18,9 @@ static class TypeSystemExtensions
 
     public static MethodInfo? GetStaticMethod(this Type type, string methodName, Type[] argTypes)
     {
-        ArgumentNullException.ThrowIfNull(type);
-
-        if (methodName.IsNullOrEmpty())
-        {
-            throw new ArgumentNullException(nameof(methodName));
-        }
-
-        ArgumentNullException.ThrowIfNull(argTypes);
+        Guard.NotNull(type, nameof(type));
+        Guard.NotNullOrEmpty(methodName, nameof(methodName));
+        Guard.NotNull(argTypes, nameof(argTypes));
 
         // if (argTypes.Length == 0)
         // {
@@ -50,8 +40,8 @@ static class TypeSystemExtensions
     /// <returns><code>true</code> if <paramref name="type" /> implements <paramref name="interfaceType" /></returns>
     public static bool ImplementsInterface(this Type type, Type interfaceType)
     {
-        ArgumentNullException.ThrowIfNull(type);
-        ArgumentNullException.ThrowIfNull(interfaceType);
+        Guard.NotNull(type, nameof(type));
+        Guard.NotNull(interfaceType, nameof(interfaceType));
 
         if (!interfaceType.IsInterface)
         {
@@ -65,11 +55,11 @@ static class TypeSystemExtensions
 
     public static bool ImplementsInterface<TInterface>(this Type type)
     {
-        ArgumentNullException.ThrowIfNull(type);
-        
+        Guard.NotNull(type, nameof(type));
+
         return ImplementsInterface(typeof(TInterface), type);
     }
-    
+
     /// <summary>
     ///     Determines if <paramref name="type" /> implements generic interface <paramref name="interfaceType" />.
     /// </summary>
@@ -78,8 +68,8 @@ static class TypeSystemExtensions
     /// <returns><code>true</code> if <paramref name="type" /> implements <paramref name="interfaceType" /></returns>
     public static bool ImplementsGenericInterface(this Type type, Type interfaceType)
     {
-        ArgumentNullException.ThrowIfNull(type);
-        ArgumentNullException.ThrowIfNull(interfaceType);
+        Guard.NotNull(type, nameof(type));
+        Guard.NotNull(interfaceType, nameof(interfaceType));
 
         if (!interfaceType.IsInterface)
         {
@@ -130,7 +120,7 @@ static class TypeSystemExtensions
 
         return (null, null);
     }
-    
+
     /// <summary>
     ///     Determines if <paramref name="type" />represents a simple type.
     ///     Simple types are primitive types (bool, sbyte, byte, short, ushort, int, uint, long, ulong, float, double, char,
@@ -164,16 +154,18 @@ static class TypeSystemExtensions
     /// <returns><code>true</code> if <paramref name="type" />is a simple type.</returns>
     public static bool IsSimpleValueType(this Type type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        Guard.NotNull(type, nameof(type));
 
         if (type.IsArray)
         {
             return false;
         }
 
-        return IsNumericValueType(type) || 
+        return IsNumericValueType(type) ||
+#if NET7_0_OR_GREATER
                type == typeof(TimeOnly) ||
                type == typeof(DateOnly) ||
+#endif
                type == typeof(DateTime) ||
                type == typeof(DateTimeOffset) ||
                type == typeof(TimeSpan) ||
@@ -183,7 +175,7 @@ static class TypeSystemExtensions
 
     public static bool IsNumericValueType(this Type type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        Guard.NotNull(type, nameof(type));
 
         if (type.IsArray)
         {
@@ -199,8 +191,10 @@ static class TypeSystemExtensions
                type == typeof(uint) ||
                type == typeof(long) ||
                type == typeof(ulong) ||
+#if NET7_0_OR_GREATER
                type == typeof(Int128) ||
                type == typeof(UInt128) ||
+#endif
                type == typeof(float) ||
                type == typeof(double) ||
                type == typeof(decimal);
@@ -213,7 +207,7 @@ static class TypeSystemExtensions
     /// <returns><code>true</code>if <paramref name="type" /> is a nullable type.</returns>
     public static bool IsNullable(this Type type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        Guard.NotNull(type, nameof(type));
 
         if (!type.IsValueType &&
             !type.IsEnum)
@@ -232,7 +226,7 @@ static class TypeSystemExtensions
     /// <returns>The concrete type if <paramref name="type" /> is nullable, or null otherwise.</returns>
     public static Type? GetTypeOfNullable(this Type type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        Guard.NotNull(type, nameof(type));
 
         if (type is { IsValueType: false, IsEnum: false })
         {
@@ -258,7 +252,7 @@ static class TypeSystemExtensions
     /// <returns>The default value for the target type.</returns>
     public static object? GetDefaultValue(this Type type, bool emptyCollections = true)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        Guard.NotNull(type, nameof(type));
 
         if (type.IsEnum)
         {
@@ -274,7 +268,7 @@ static class TypeSystemExtensions
         {
             return GetPrimitiveDefaultValue(type);
         }
-        
+
         if (!emptyCollections)
         {
             return null;
@@ -331,6 +325,7 @@ static class TypeSystemExtensions
             {
                 return 0;
             }
+#if NET7_0_OR_GREATER
             if (type == typeof(Int128))
             {
                 return default(Int128);
@@ -339,6 +334,7 @@ static class TypeSystemExtensions
             {
                 return default(UInt128);
             }
+#endif
             if (type == typeof(float))
             {
                 return 0;
@@ -363,6 +359,7 @@ static class TypeSystemExtensions
             {
                 return TimeSpan.Zero;
             }
+#if NET7_0_OR_GREATER
             if (type == typeof(TimeOnly))
             {
                 return default(TimeOnly);
@@ -371,11 +368,12 @@ static class TypeSystemExtensions
             {
                 return default(DateOnly);
             }
+#endif
             if (type == typeof(char))
             {
                 return '\0';
             }
-            
+
             throw new NotSupportedException($"{type.FullName} is not a primitive type.");
         }
     }
@@ -426,7 +424,7 @@ static class TypeSystemExtensions
         {
             return TypeKind.ULong;
         }
-
+#if NET7_0_OR_GREATER
         if (type == typeof(Int128))
         {
             return TypeKind.LongLong;
@@ -436,7 +434,7 @@ static class TypeSystemExtensions
         {
             return TypeKind.ULongLong;
         }
-
+#endif
         if (type == typeof(float))
         {
             return TypeKind.Float;
@@ -466,7 +464,7 @@ static class TypeSystemExtensions
         {
             return TypeKind.TimeSpan;
         }
-
+#if NET7_0_OR_GREATER
         if (type == typeof(TimeOnly))
         {
             return TypeKind.TimeOnly;
@@ -476,7 +474,7 @@ static class TypeSystemExtensions
         {
             return TypeKind.DateOnly;
         }
-
+#endif
         if (type == typeof(char))
         {
             return TypeKind.Char;
@@ -487,16 +485,16 @@ static class TypeSystemExtensions
 
     public static Type? Dereference(this Type type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        Guard.NotNull(type, nameof(type));
 
-        return type.IsByRef 
-            ? type.GetElementType() 
+        return type.IsByRef
+            ? type.GetElementType()
             : type;
     }
 
     public static string GetSimpleTypeName(this Type type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        Guard.NotNull(type, nameof(type));
 
         type = type.Dereference() ?? type;
 
@@ -519,7 +517,7 @@ static class TypeSystemExtensions
         {
             throw new InvalidOperationException($"Type {type.FullName} is not a simple type.");
         }
-        
+
         switch (typeName)
         {
             case "Int8":
@@ -546,12 +544,14 @@ static class TypeSystemExtensions
             case "UInt64":
                 typeName = "ulong";
                 break;
+#if NET7_0_OR_GREATER
             case "Int128":
                 typeName = "Int128";
                 break;
             case "UInt128":
                 typeName = "Int128";
                 break;
+#endif
             case "Decimal":
                 typeName = "decimal";
                 break;
@@ -570,12 +570,14 @@ static class TypeSystemExtensions
             case "TimeSpan":
                 typeName = "TimeSpan";
                 break;
+#if NET7_0_OR_GREATER
             case "DateOnly":
                 typeName = "DateOnly";
                 break;
             case "TimeOnly":
                 typeName = "TimeOnly";
                 break;
+#endif
             case "String":
                 typeName = "string";
                 break;
@@ -594,7 +596,7 @@ static class TypeSystemExtensions
 
     public static string GetDisplayName(this Type type, bool resolveGenericArgs = true)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        Guard.NotNull(type, nameof(type));
 
         type = type.Dereference() ?? type;
 

@@ -2,32 +2,37 @@ namespace Std.FirebirdEmbedded.Tools.Templates;
 
 internal partial class TargetFileTemplate
 {
-    public string Generate(string tfm, FirebirdAsset asset)
+    public string Generate(string tfm, FirebirdAsset asset, bool transitive)
     {
         Release = asset.Release;
         Assets = [asset];
 
-        return DoGenerate(asset, tfm);
+        return DoGenerate(asset, tfm, transitive);
     }
 
-    public string Generate(IPackageDetails packageDetails, string tfm, FirebirdAsset[] assets)
+    public string Generate(IPackageDetails packageDetails, string tfm, FirebirdAsset[] assets, bool transitive)
     {
         Release = packageDetails.Release;
         Assets = assets;
 
-        return DoGenerate(packageDetails, tfm);
+        return DoGenerate(packageDetails, tfm, transitive);
     }
 
-    private string DoGenerate(IPackageDetails packageDetails, string tfm)
+    private string DoGenerate(IPackageDetails packageDetails, string tfm, bool transitive)
     {
+        Tfm = tfm;
+
         var targetFile = TransformText();
 
-        var outputDir = Path.Combine(packageDetails.PackageRootDirectory, "buildTransitive", tfm);
+        var targetDir = transitive
+            ? "buildTransitive"
+            : "build";
+        var outputDir = Path.Combine(packageDetails.PackageRootDirectory, targetDir, tfm);
         Directory.CreateDirectory(outputDir);
         var fileName = packageDetails.PackageId + ".targets";
         var outputPath = Path.Combine(outputDir, fileName);
         File.WriteAllText(outputPath, targetFile);
 
-        return Path.Combine("buildTransitive", tfm, fileName);
+        return Path.Combine(targetDir, tfm, fileName);
     }
 }

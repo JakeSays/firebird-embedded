@@ -11,7 +11,7 @@ namespace Std.FirebirdEmbedded.Tools;
 internal sealed class NugetPackageBuilder
 {
     private readonly ReadmeTemplate _readmeTemplate = new ();
-    private readonly TargetFileTemplate _consolidatedTargetFileTemplate = new ();
+    private readonly TargetFileTemplate _targetFileTemplate = new ();
 
     private static readonly NugetLogger Logger = new();
 
@@ -92,8 +92,10 @@ internal sealed class NugetPackageBuilder
 
             AddNugetFiles(builder, "", details.NugetFiles, details.PackageRootDirectory);
 
-            AddTargetFile("netstandard2.0");
-            AddTargetFile("net48");
+            AddTargetFile("netstandard2.0", true);
+            AddTargetFile("netstandard2.0", false);
+            AddTargetFile("net48", true);
+            AddTargetFile("net48", false);
 
             MakeLibDir(details.PackageRootDirectory, "netstandard2.0");
             MakeLibDir(details.PackageRootDirectory, "net48");
@@ -111,9 +113,9 @@ internal sealed class NugetPackageBuilder
             using var outputStream = new FileStream(packagePath, FileMode.Create, FileAccess.Write);
             builder.Save(outputStream);
 
-            void AddTargetFile(string tfm)
+            void AddTargetFile(string tfm, bool transitive)
             {
-                var targetFile = _consolidatedTargetFileTemplate.Generate(details, tfm, assets);
+                var targetFile = _targetFileTemplate.Generate(details, tfm, assets, transitive);
                 builder.AddFiles(details.PackageRootDirectory, targetFile, Path.GetDirectoryName(targetFile));
             }
         }
@@ -178,8 +180,10 @@ internal sealed class NugetPackageBuilder
 
         builder.AddFiles(asset.PackageRootDirectory, "README.md", "");
 
-        AddTargetFile("net48");
-        AddTargetFile("netstandard2.0");
+        AddTargetFile("net48", true);
+        AddTargetFile("net48", false);
+        AddTargetFile("netstandard2.0", true);
+        AddTargetFile("netstandard2.0", false);
 
         MakeLibDir(asset.PackageRootDirectory, "net48");
         MakeLibDir(asset.PackageRootDirectory, "netstandard2.0");
@@ -197,9 +201,9 @@ internal sealed class NugetPackageBuilder
         using var outputStream = new FileStream(packagePath, FileMode.Create, FileAccess.Write);
         builder.Save(outputStream);
 
-        void AddTargetFile(string tfm)
+        void AddTargetFile(string tfm, bool transitive)
         {
-            var targetFile = _consolidatedTargetFileTemplate.Generate(tfm, asset);
+            var targetFile = _targetFileTemplate.Generate(tfm, asset, transitive);
             builder.AddFiles(asset.PackageRootDirectory, targetFile, Path.GetDirectoryName(targetFile));
         }
     }
@@ -255,12 +259,12 @@ internal sealed class NugetPackageBuilder
             Id = packageId,
             Version = NuGetVersion.Parse(packageVersion),
             Description = description,
-            Authors = { "Jake Helfert" },
+            Authors = { "JakeSays" },
             Tags = { "firebird", "firebirdsql", "native", "sql", "embedded", "standalone", "firebirdsql.data.client" },
             LicenseUrl = new Uri("https://www.firebirdsql.org/en/licensing"),
             Language = "en-US",
             ProjectUrl = new Uri("https://github.com/jakesays/firebird-embedded"),
-            Copyright = $"(c) {DateTime.Now.Year} Jake Helfert",
+            Copyright = $"(c) {DateTime.Now.Year} JakeSays",
             Readme = "README.md",
             Icon = "icon.png"
         };

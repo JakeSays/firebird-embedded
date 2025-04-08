@@ -9,6 +9,7 @@ using Std.CommandLine.Arguments;
 using Std.CommandLine.Binding;
 using Std.CommandLine.Commands;
 using Std.CommandLine.Options;
+using Std.CommandLine.Utility;
 
 
 namespace Std.CommandLine.Parsing
@@ -55,7 +56,8 @@ namespace Std.CommandLine.Parsing
 
         private bool IsFull(IArgument argument)
         {
-            ArgumentNullException.ThrowIfNull(argument);
+            Guard.NotNull(argument, nameof(argument));
+
             var count = _argumentCounts.GetValueOrDefault(argument, 0);
 
             return count >= argument.Arity.MaximumNumberOfValues;

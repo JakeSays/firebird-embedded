@@ -189,7 +189,7 @@ namespace Std.CommandLine.Help
         /// <exception cref="ArgumentNullException"></exception>
         private void AppendDescription(string description)
         {
-            ArgumentNullException.ThrowIfNull(description);
+            Guard.NotNull(description, nameof(description));
 
             var availableWidth = GetAvailableWidth();
             var descriptionLines = SplitText(description, availableWidth);
@@ -209,7 +209,7 @@ namespace Std.CommandLine.Help
         /// <exception cref="ArgumentNullException"></exception>
         protected virtual void AppendHelpItems(IReadOnlyList<HelpItem> helpItems)
         {
-            ArgumentNullException.ThrowIfNull(helpItems);
+            Guard.NotNull(helpItems, nameof(helpItems));
 
             var table = CreateTable(helpItems,
                 item => [item.Invocation, JoinNonEmpty(" ", item.Description, item.DefaultValueHint)]);
@@ -385,8 +385,8 @@ namespace Std.CommandLine.Help
         /// </returns>
         protected virtual IReadOnlyList<string> SplitText(string text, int width)
         {
-            ArgumentNullException.ThrowIfNull(text);
-            ArgumentOutOfRangeException.ThrowIfLessThan(width, 0, nameof(width));
+            Guard.NotNull(text, nameof(text));
+            Guard.GreaterEqual(width, 0, nameof(width));
 
             if (width == 0)
             {

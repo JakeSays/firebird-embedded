@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using FirebirdSql.Data.FirebirdClient;
+﻿using FirebirdSql.Data.FirebirdClient;
 using FirebirdSql.Embedded;
 
 namespace PackageTester;
@@ -34,7 +33,7 @@ class Program
             Database = dbFile,
             ServerType = FbServerType.Embedded,
             UserID = "SYSDBA",
-            Password = "something-special"
+            //Password = "something-special"
         }.ToString();
 
         FbConnection.CreateDatabase(cs, overwrite: true);

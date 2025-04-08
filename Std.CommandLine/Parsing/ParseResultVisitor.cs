@@ -22,7 +22,7 @@ namespace Std.CommandLine.Parsing
         private readonly TokenizeResult _tokenizeResult;
         private readonly string? _rawInput;
 
-        private readonly DirectiveCollection _directives = new DirectiveCollection();
+        private readonly DirectiveCollection _directives = [];
         private readonly List<string> _unparsedTokens;
         private readonly List<string> _unmatchedTokens;
         private readonly List<ParseError> _errors;
@@ -246,8 +246,7 @@ namespace Std.CommandLine.Parsing
 
         private void ValidateCommandHandler()
         {
-            if (!(_innermostCommandResult!.Command is Command cmd) ||
-                cmd.Handler != null)
+            if (_innermostCommandResult!.Command is not Command { Handler: null } cmd)
             {
                 return;
             }
@@ -267,12 +266,12 @@ namespace Std.CommandLine.Parsing
         private void ValidateOptionResult(OptionResult optionResult)
         {
             var argument = optionResult.Option.Argument;
-            ArgumentNullException.ThrowIfNull(argument);
+            Guard.NotNull(argument, nameof(argument));
 
             var arityFailure = ArgumentArity.Validate(
                 optionResult,
-                argument,
-                argument.Arity.MinimumNumberOfValues,
+                argument!,
+                argument!.Arity.MinimumNumberOfValues,
                 argument.Arity.MaximumNumberOfValues);
 
             if (arityFailure != null)
@@ -342,7 +341,7 @@ namespace Std.CommandLine.Parsing
                         case null:
                             switch (symbol)
                             {
-                                case Option option when option.Argument?.HasDefaultValue == true:
+                                case Option { Argument.HasDefaultValue: true } option:
 
                                     var optionResult = new OptionResult(
                                         option,
@@ -358,7 +357,7 @@ namespace Std.CommandLine.Parsing
 
                                     break;
 
-                                case Argument argument when argument.HasDefaultValue:
+                                case Argument { HasDefaultValue: true } argument:
 
                                     var argumentResult = commandResult.GetOrCreateDefaultArgumentResult(argument);
 
@@ -382,7 +381,7 @@ namespace Std.CommandLine.Parsing
         }
 
         public ParseResult Result =>
-            new ParseResult(
+            new (
                 _parser,
                 _rootCommandResult ?? throw new InvalidOperationException("No root command was found"),
                 _innermostCommandResult ?? throw new InvalidOperationException("No command was found"),
