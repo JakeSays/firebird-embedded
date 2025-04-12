@@ -49,6 +49,7 @@ internal sealed class Configuration
     public BuildType BuildType { get; }
     public List<FirebirdVersion> VersionsToBuild { get; }
     public DateTimeOffset BuildDate { get; }
+    public bool TemplatesOnly { get; set; }
 
     public static void Initialize(
         string? packagePrefix,

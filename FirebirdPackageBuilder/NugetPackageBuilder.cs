@@ -52,6 +52,15 @@ internal sealed class NugetPackageBuilder
         BuildMetaPackage(release.WindowsPackage);
         void BuildMetaPackage(ConsolidatedPackageDetails details)
         {
+            if (_config.TemplatesOnly)
+            {
+                var tassets = release.Assets
+                    .Where(a => a.Platform == details.Platform)
+                    .ToArray();
+                _targetFileTemplate.Generate(details, "netstandard2.0", tassets, true);
+                _readmeTemplate.Generate(details);
+                return;
+            }
             var (currentRelease, releaseChanged) = CalculatePackageRelease(details);
 
             if (!releaseChanged && _config.BuildType != BuildType.Force)
@@ -80,7 +89,7 @@ internal sealed class NugetPackageBuilder
             {
                 var contentRoot = MakeAssetPath(asset);
                 var files = asset.NugetFiles
-                    .Where(a => !a.SourcePath.EndsWith(PackageStructureBuilder.LicenseFileName))
+                    .Where(a => !a.SourcePath.Contains("LICENSES"))
                     .Where(a => !a.SourcePath.EndsWith(PackageStructureBuilder.IconFileName))
                     .ToList();
                 AddNugetFiles(builder, contentRoot, files, asset.PackageRootDirectory);
@@ -150,11 +159,18 @@ internal sealed class NugetPackageBuilder
         }
         // if nothing changed then this is a 'normal' build, no firebird version bump, no package version bump.
 
-        return (currentRelease, !ReferenceEquals(currentRelease, currentReleaseOrg));
+        return (currentRelease, !ReferenceEquals(currentRelease, currentReleaseOrg) || _config.BuildType == BuildType.Force);
     }
 
     private void BuildAssetPackage(FirebirdAsset asset)
     {
+        if (_config.TemplatesOnly)
+        {
+            _targetFileTemplate.Generate("netstandard2.0", asset, true);
+            _readmeTemplate.Generate(asset);
+            return;
+        }
+
         var (currentRelease, releaseChanged) = CalculatePackageRelease(asset);
 
         if (!releaseChanged)
@@ -229,7 +245,7 @@ internal sealed class NugetPackageBuilder
 
     private static string MakeAssetPath(FirebirdAsset asset)
     {
-        return MakePath(asset, "content", asset.Rid.PackageText, asset.Release.Version.ToString());
+        return MakePath(asset, ".firebird", asset.Rid.PackageText, asset.Release.Version.ToString());
     }
 
     private static string MakePath(FirebirdAsset asset, params string[] parts)
@@ -267,7 +283,7 @@ internal sealed class NugetPackageBuilder
             LicenseUrl = new Uri("https://www.firebirdsql.org/en/licensing"),
             Language = "en-US",
             ProjectUrl = new Uri("https://github.com/jakesays/firebird-embedded"),
-            Copyright = $"(c) {DateTime.Now.Year} JakeSays",
+            Copyright = $"\u00a9 {DateTime.Now.Year} JakeSays",
             Readme = "README.md",
             Icon = "icon.png"
         };

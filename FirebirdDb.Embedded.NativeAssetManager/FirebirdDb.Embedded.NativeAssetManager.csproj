@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <AssemblyName>FirebirdDb.Embedded.NativeAssetManager</AssemblyName>
         <RootNamespace>FirebirdSql.Embedded</RootNamespace>
-        <CurrentVersion>1.0.2</CurrentVersion>
+        <CurrentVersion>1.0.4</CurrentVersion>
         <AssemblyVersion>$(CurrentVersion).0</AssemblyVersion>
         <FileVersion>$(CurrentVersion).0</FileVersion>
         <EnableDefaultCompileItems>False</EnableDefaultCompileItems>
@@ -26,6 +26,7 @@
         <PackageTags>firebird firebirdsql native sql embedded standalone firebirdsql.data.client</PackageTags>
         <PackageVersion>$(CurrentVersion)</PackageVersion>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Copyright>© 2025, JakeSays</Copyright>
         <IncludeBuildOutput>true</IncludeBuildOutput>
     </PropertyGroup>
 

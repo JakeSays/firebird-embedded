@@ -24,6 +24,17 @@ internal static class ArchitectureExtensions
             _ => throw new ArgumentOutOfRangeException(nameof(architecture), architecture, null)
         };
 
+    public static string MsBuildName(this Architecture architecture) =>
+        architecture switch
+        {
+            Architecture.X32 => "X86",
+            Architecture.X64 => "X64",
+            Architecture.Arm32 => "Arm32",
+            Architecture.Arm64 => "Arm64",
+            Architecture.All => throw new NotSupportedException(),
+            _ => throw new ArgumentOutOfRangeException(nameof(architecture), architecture, null)
+        };
+
     public static string RidSuffix(this Architecture architecture, Platform platform) =>
         architecture switch
         {

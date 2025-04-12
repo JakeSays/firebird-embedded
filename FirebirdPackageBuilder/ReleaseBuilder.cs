@@ -13,7 +13,7 @@ internal static class ReleaseBuilder
             return false;
         }
 
-        if (!UnPack(config, releases))
+        if (!config.TemplatesOnly && !UnPack(config, releases))
         {
             return false;
         }

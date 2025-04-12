@@ -11,12 +11,14 @@ internal class ConsolidatedPackageDetails : IPackageDetails
     public List<NugetFile> NugetFiles { get; } = [];
 
     public string PackageId { get; private set; } = null!;
+    public string LicensesFileName { get; }
 
     public ConsolidatedPackageDetails(FirebirdRelease release, Platform platform)
     {
         Rid = new Rid(platform);
         Release = release;
         Platform = platform;
+        LicensesFileName = $"LICENSES{release.Version}.zip";
     }
 
     public void Initialize(Configuration config)

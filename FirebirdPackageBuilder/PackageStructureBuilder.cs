@@ -6,9 +6,9 @@ namespace Std.FirebirdEmbedded.Tools;
 
 internal sealed class PackageStructureBuilder
 {
-    public const string LicenseFileName = "LICENSES.txt";
+    public const string LicenseFileName = "LICENSES.zip";
     public const string IconFileName = "icon.png";
-    private readonly string _licenseFileText = ManifestResourceManager.ReadStringResource(LicenseFileName)
+    private readonly byte[] _licenseFileBytes = ManifestResourceManager.ReadBinaryResource(LicenseFileName)
         ?? throw new InvalidOperationException("License file resource not found.");
     private readonly byte[] _iconBytes = ManifestResourceManager.ReadBinaryResource(IconFileName)
         ?? throw new InvalidOperationException("Icon file resource not found.");
@@ -38,10 +38,13 @@ internal sealed class PackageStructureBuilder
             CreateConsolidatedPackageStructure(release.LinuxPackage);
             CreateConsolidatedPackageStructure(release.WindowsPackage);
 
-            CopyLicenses(release.LinuxPackage.NugetFiles, release.LinuxPackage.PackageRootDirectory);
-            CopyLicenses(release.WindowsPackage.NugetFiles, release.WindowsPackage.PackageRootDirectory);
-            CopyIcon(release.LinuxPackage.NugetFiles, release.LinuxPackage.PackageRootDirectory);
-            CopyIcon(release.WindowsPackage.NugetFiles, release.WindowsPackage.PackageRootDirectory);
+            if (!_config.TemplatesOnly)
+            {
+                CopyLicenses(release.LinuxPackage, release.LinuxPackage.NugetFiles, release.LinuxPackage.PackageRootDirectory);
+                CopyLicenses(release.WindowsPackage, release.WindowsPackage.NugetFiles, release.WindowsPackage.PackageRootDirectory);
+                CopyIcon(release.LinuxPackage.NugetFiles, release.LinuxPackage.PackageRootDirectory);
+                CopyIcon(release.WindowsPackage.NugetFiles, release.WindowsPackage.PackageRootDirectory);
+            }
 
             return true;
         }
@@ -71,7 +74,12 @@ internal sealed class PackageStructureBuilder
 
         IoHelpers.RecreateDirectory(asset.PackageRootDirectory);
 
-        CopyLicenses(asset.NugetFiles, asset.PackageRootDirectory);
+        if (_config.TemplatesOnly)
+        {
+            return;
+        }
+
+        CopyLicenses(asset, asset.NugetFiles, asset.PackageRootDirectory);
         CopyIcon(asset.NugetFiles, asset.PackageRootDirectory);
 
         switch (version)
@@ -115,17 +123,17 @@ internal sealed class PackageStructureBuilder
         asset.NugetFiles.Add(new NugetFile(NugetDestination.Runtime, fileName));
     }
 
-    private void CopyLicenses(List<NugetFile> nugetFiles, string destRootDirectory)
+    private void CopyLicenses(IPackageDetails details, List<NugetFile> nugetFiles, string destRootDirectory)
     {
-        var destPath = Path.Combine(destRootDirectory, LicenseFileName);
+        var destPath = Path.Combine(destRootDirectory, details.LicensesFileName);
 
         if (LogConfig.IsNaggy)
         {
             StdOut.DarkGreenLine($"Writing Licenses file to '{destPath}'");
         }
 
-        File.WriteAllText(destPath, _licenseFileText);
-        nugetFiles.Add(new NugetFile(NugetDestination.Content, LicenseFileName));
+        File.WriteAllBytes(destPath, _licenseFileBytes);
+        nugetFiles.Add(new NugetFile(NugetDestination.Content, details.LicensesFileName));
     }
 
     private void CopyIcon(List<NugetFile> nugetFiles, string destRootDirectory)

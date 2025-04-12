@@ -42,6 +42,7 @@ internal static class Program
         public BuildType Type { get; set; }
         public string? AssetManagerVersion { get; set; }
         public string InitialPackageVersion { get; set; } = null!;
+        public bool TemplatesOnly { get; set; }
     }
 
     private class PublishArgs
@@ -130,6 +131,12 @@ internal static class Program
                     .DefaultValue("1.0.1")
                     .Singleton()
                     .Description("Initial package version. Defaults to 1.0.1")
+                )
+                .Flag(f => f
+                    .Alias("--to")
+                    .Name("TemplatesOnly")
+                    .Hidden()
+                    .Description("Generate templates only. Defaults to false.")
                 )
                 .OnExecute((BuildArgs bargs) => BuildPackages(bargs))
             )
@@ -228,6 +235,7 @@ internal static class Program
             args.Type,
             assetManagerVersion,
             (ReleaseVersion) initialPackageVersion!);
+        Configuration.Instance.TemplatesOnly = args.TemplatesOnly;
 
         var metadata = MetadataSerializer.Load(Configuration.Instance.MetadataFilePath);
         if (metadata == null)

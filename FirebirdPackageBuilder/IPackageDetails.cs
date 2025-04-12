@@ -6,6 +6,6 @@ internal interface IPackageDetails
     string PackageId { get; }
     string PackageRootDirectory { get; }
     FirebirdRelease Release { get; }
-
+    public string LicensesFileName { get; }
     Architecture[] Architectures { get; }
 }

@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+
+
 namespace Std.FirebirdEmbedded.Tools;
 
 internal sealed class FirebirdAsset : IPackageDetails
@@ -14,8 +17,9 @@ internal sealed class FirebirdAsset : IPackageDetails
 
     public List<NugetFile> NugetFiles { get; } = [];
 
-    public string PropertySuffix => $"{Release.Version}{Platform}{Architecture}";
-    //public string Rid => $"{Platform.RidPrefix()}-{Architecture.RidSuffix(Platform)}";
+    [field: AllowNull, MaybeNull]
+    public string PropertySuffix => field ??= $"{Release.Version}{Platform}{Architecture}";
+
     public ReleaseVersion Version { get; }
     public string Name { get; }
     public string FileName { get; }
@@ -29,6 +33,7 @@ internal sealed class FirebirdAsset : IPackageDetails
     public string DownloadUrl { get; }
     public uint DownloadSize { get; init; }
     public bool Uploaded { get; init; }
+    public string LicensesFileName { get; }
 
     public FirebirdAsset(ReleaseVersion version,
         string name,
@@ -74,5 +79,7 @@ internal sealed class FirebirdAsset : IPackageDetails
         {
             UnpackedDirectory += "/opt/firebird";
         }
+
+        LicensesFileName = $"LICENSES{release.Version}.zip";
     }
 }

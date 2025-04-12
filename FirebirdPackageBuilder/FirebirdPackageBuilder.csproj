@@ -30,5 +30,7 @@
     <ItemGroup>
       <EmbeddedResource Include="Assets\LICENSES.txt" />
       <EmbeddedResource Include="Assets\icon.png" />
+      <None Remove="Assets\LICENSES.zip" />
+      <EmbeddedResource Include="Assets\LICENSES.zip" />
     </ItemGroup>
 </Project>

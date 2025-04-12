@@ -1,15 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <!--    <Import Project="$(MSBuildThisFileDirectory)FirebirdSQL.Embedded.V5.NativeAssets.Linux.targets"/>-->
-<!--    <Import Project="/home/jake/.nuget/packages/firebirddb.embedded.v5.nativeassets.linux.all/1.0.7/buildTransitive/netstandard2.0/FirebirdDb.Embedded.V5.NativeAssets.Linux.All.targets"/>-->
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net9.0</TargetFramework>
         <LangVersion>latestmajor</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-<!--        <RuntimeIdentifiers>linux-arm;linux-x64</RuntimeIdentifiers>-->
-        <!--        <RuntimeIdentifier>linux-arm</RuntimeIdentifier>-->
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -17,11 +13,16 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="FirebirdDb.Embedded.NativeAssetManager" Version="1.0.3" />
+        <PackageReference Include="FirebirdDb.Embedded.V3.NativeAssets.Linux.All" Version="1.0.4" />
+        <PackageReference Include="FirebirdDb.Embedded.V4.NativeAssets.Linux.All" Version="1.0.4" />
+        <PackageReference Include="FirebirdDb.Embedded.V5.NativeAssets.Linux.All" Version="1.0.4" />
+
         <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.2"/>
-        <PackageReference Include="FirebirdDb.Embedded.V3.NativeAssets.Linux.All" Version="1.0.7"/>
-        <PackageReference Include="FirebirdDb.Embedded.V4.NativeAssets.Linux.All" Version="1.0.7"/>
-        <!--        <PackageReference Include="FirebirdSQL.Embedded.NativeAssetManager" Version="1.0.0" />-->
-        <PackageReference Include="FirebirdDb.Embedded.V5.NativeAssets.Linux.All" Version="1.0.7"/>
+    </ItemGroup>
+
+    <ItemGroup>
+<!--      <ProjectReference Include="..\FirebirdDb.Embedded.NativeAssetManager\FirebirdDb.Embedded.NativeAssetManager.csproj" />-->
     </ItemGroup>
 
 </Project>

@@ -10,16 +10,18 @@ public static class FbNativeAssetManager
 {
     public static string? NativeAssetPath(FirebirdVersion version)
     {
-        var basePath = GetBasePath(true);
+        var basePath = GetBasePath();
+        if (basePath == null)
+        {
+            return null;
+        }
+
         var versionedPath = Path.Combine(basePath, version.ToString());
+
+        Console.WriteLine($"***** {version}: {versionedPath}");
         if (!Directory.Exists(versionedPath))
         {
-            basePath = GetBasePath(false);
-            versionedPath = Path.Combine(basePath, version.ToString());
-            if (!Directory.Exists(versionedPath))
-            {
-                return null;
-            }
+            return null;
         }
 
         var fullPath = Path.Combine(versionedPath, MakeNativeBinaryName(version));
@@ -64,31 +66,42 @@ public static class FbNativeAssetManager
         return linuxProcessPath;
     }
 
-    private static string GetBasePath(bool usePublished)
+    private static string? GetBasePath()
     {
-        const string publishedDirectory = "firebird";
+        const string firebirdDirectory = "firebird";
 
-        if (usePublished)
+        var intermediateDir = Path.Combine(_hostProcessDirectory, firebirdDirectory);
+        //first see if the binaries are alongside the host process
+        if (!Directory.Exists(intermediateDir))
         {
-            return Path.Combine(_hostProcessDirectory, publishedDirectory);
+            //they're not so see if we're running as an expanded single-file deployment
+            //if we're running as a non-expanded single-file deployment corlibLocation will be null
+            var corlibLocation = typeof(string).Assembly.Location;
+            if (corlibLocation == null!)
+            {
+                //no luck - binaries can't be located
+                return null;
+            }
+
+            intermediateDir = Path.Combine(Path.GetDirectoryName(corlibLocation)!, firebirdDirectory);
         }
 
         var basePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? GetWindowsPath()
-            : GetLinuxPath();
+            ? GetWindowsPath(intermediateDir)
+            : GetLinuxPath(intermediateDir);
 
         return basePath;
 
-        static string GetLinuxPath()
+        static string GetLinuxPath(string intermediateDir)
         {
             var rid = $"linux-{(Environment.Is64BitProcess ? "x64" : "x32")}";
-            return Path.Combine(_hostProcessDirectory, rid);
+            return Path.Combine(intermediateDir, rid);
         }
 
-        static string GetWindowsPath()
+        static string GetWindowsPath(string intermediateDir)
         {
-            var rid = $"win-{(Environment.Is64BitProcess ? "x64" : "x32")}";
-            return Path.Combine(_hostProcessDirectory, rid);
+            var rid = $"win-{(Environment.Is64BitProcess ? "x64" : "x86")}";
+            return Path.Combine(intermediateDir, rid);
         }
     }
 
@@ -97,15 +110,16 @@ public static class FbNativeAssetManager
 
     private static string? readlink(string path)
     {
-        var buf = new byte[512];
-        var ret = readlink(path, buf, buf.Length);
-        if (ret == -1)
+        const int bufferSize = 1_024;
+        var buf = new byte[bufferSize];
+        var pathLength = readlink(path, buf, buf.Length);
+        if (pathLength == -1)
         {
             return null;
         }
-        var cbuf = new char[512];
-        var chars = Encoding.Default.GetChars(buf, 0, ret, cbuf, 0);
-        return new string(cbuf, 0, chars);
+        var chars = new char[bufferSize];
+        var charCount = Encoding.Default.GetChars(buf, 0, pathLength, chars, 0);
+        return new string(chars, 0, charCount);
     }
 
     [DllImport("kernel32.dll", SetLastError=true)]

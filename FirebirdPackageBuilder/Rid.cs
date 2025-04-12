@@ -1,6 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
+
 namespace Std.FirebirdEmbedded.Tools;
 
-internal readonly record struct Rid(Platform Platform, Architecture Architecture = Architecture.All)
+internal record struct Rid(Platform Platform, Architecture Architecture = Architecture.All)
 {
     public override string ToString() =>
         Architecture != Architecture.All
@@ -9,9 +12,11 @@ internal readonly record struct Rid(Platform Platform, Architecture Architecture
 
     public string ToStringFull() => $"{Platform.RidPrefix()}-{Architecture.Name()}";
 
-    public string PackageText => $"{Platform.RidPrefix()}-{Architecture.RidSuffix(Platform)}";
+    [field: AllowNull, MaybeNull]
+    public string PackageText => field ??= $"{Platform.RidPrefix()}-{Architecture.RidSuffix(Platform)}";
 
-    public string DisplayName => $"{Platform}.{Architecture}";
+    [field: AllowNull, MaybeNull]
+    public string DisplayName => field ??= $"{Platform}.{Architecture}";
 
     public static bool TryParse(string platformText, string? architectureText, out Rid rid)
     {

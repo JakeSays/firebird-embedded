@@ -14,6 +14,6 @@ This is the binary package for Firebird Embedded version <#= FbVersion #>, <#= P
 This is the binary package for Firebird Embedded version <#= FbVersion #>, <#= Platform #> <#= string.Join(", ", Architecture) #>.
 <# } #>
 
-Release notes summary:
+### Release notes summary for firebird version <#= FbVersion #> :
 
 <#= Content #>
