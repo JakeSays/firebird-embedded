@@ -5,7 +5,7 @@ internal class ConsolidatedPackageDetails : IPackageDetails
     public Rid Rid { get; }
 
     public FirebirdRelease Release { get; }
-    public Architecture[] Architectures { get; }
+    public Architecture[] Architectures { get; private set; } = null!;
     public Platform Platform { get; }
     public string PackageRootDirectory { get; private set; } = null!;
     public List<NugetFile> NugetFiles { get; } = [];
@@ -17,10 +17,6 @@ internal class ConsolidatedPackageDetails : IPackageDetails
         Rid = new Rid(platform);
         Release = release;
         Platform = platform;
-        Architectures = release.Assets
-            .Where(a => a.Rid.Platform == platform)
-            .Select(a => a.Rid.Architecture)
-            .ToArray();
     }
 
     public void Initialize(Configuration config)
@@ -33,6 +29,12 @@ internal class ConsolidatedPackageDetails : IPackageDetails
 
         PackageRootDirectory =
             Path.Combine(config.PackageWorkingDirectory, Release.Version.ToString(), $"Firebird-{Release.ReleaseVersion}-{Rid.ToStringFull()}");
+
+        Architectures = Release.Assets
+            .Where(a => a.Rid.Platform == Platform)
+            .Select(a => a.Rid.Architecture)
+            .Order()
+            .ToArray();
     }
 }
 

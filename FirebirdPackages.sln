@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FirebirdPackageBuilder", "F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageTester", "PackageTester\PackageTester.csproj", "{3C6187ED-21BE-4EF2-94F8-49F16719E6DE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FirebirdSQL.Embedded.NativeAssetManager", "FirebirdSQL.Embedded.NativeAssetManager\FirebirdSQL.Embedded.NativeAssetManager.csproj", "{EA00033A-5F10-4AAB-A9CC-4FE94A3AA0D1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FirebirdDb.Embedded.NativeAssetManager", "FirebirdDb.Embedded.NativeAssetManager\FirebirdDb.Embedded.NativeAssetManager.csproj", "{EA00033A-5F10-4AAB-A9CC-4FE94A3AA0D1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Std.CommandLine", "Std.CommandLine\Std.CommandLine.csproj", "{5E5FDB3E-A1D5-498A-971B-41DF6F0C1008}"
 EndProject

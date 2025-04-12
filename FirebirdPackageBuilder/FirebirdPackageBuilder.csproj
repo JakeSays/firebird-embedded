@@ -12,6 +12,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="NuGet.Commands" Version="6.13.2" />
         <PackageReference Include="NuGet.Packaging" Version="6.13.2"/>
         <PackageReference Include="Octokit" Version="14.0.0"/>
         <PackageReference Include="Std.TextTemplating.SourceGenerator" Version="1.0.9" />

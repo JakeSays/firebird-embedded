@@ -17,7 +17,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
 
     public FirebirdReleases GetLatestReleases()
     {
-        if (Configuration.IsNormal)
+        if (LogConfig.IsNormal)
         {
             StdOut.NormalLine("Downloading firebird release information from github.");
         }
@@ -222,7 +222,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
 
     internal Task<DownloadResult[]> DownloadAssets(FirebirdRelease release)
     {
-        if (Configuration.IsNormal)
+        if (LogConfig.IsNormal)
         {
             StdOut.NormalLine("Downloading firebird assets.");
         }
@@ -242,7 +242,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
                 {
                     if (!_config.ForceDownload)
                     {
-                        if (Configuration.IsNaggy)
+                        if (LogConfig.IsNaggy)
                         {
                             StdOut.DarkGreenLine($"{asset.FileName} already exists, skipping download.");
                         }
@@ -251,7 +251,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
                     File.Delete(asset.LocalPath);
                 }
 
-                if (Configuration.IsLoud)
+                if (LogConfig.IsLoud)
                 {
                     StdOut.NormalLine($"Downloading asset {asset.Name}");
                 }
@@ -264,7 +264,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
             }
             catch (Exception ex)
             {
-                if (!Configuration.IsSilent)
+                if (!LogConfig.IsSilent)
                 {
                     StdErr.RedLine($"Error downloading asset {asset.Name}, reason: {ex.Message}");
                 }

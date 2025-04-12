@@ -1,12 +1,30 @@
-namespace Std.FirebirdEmbedded.Tools;
+using NuGet.Versioning;
+using Std.FirebirdEmbedded.Tools.Support;
 
-internal record PackageVersions(string V3Version, string V4Version, string V5Version);
+
+namespace Std.FirebirdEmbedded.Tools;
 
 internal enum BuildType
 {
     Normal,
     Rebuild,
     Force
+}
+
+internal static class LogConfig
+{
+    public static Verbosity Verbosity { get; private set; }
+
+    public static void Initialize(Verbosity verbosity)
+    {
+        Verbosity = verbosity;
+        NugetLogger.InitializeDefault(verbosity);
+    }
+
+    public static bool IsSilent => Verbosity == Verbosity.Silent;
+    public static bool IsNormal => Verbosity >= Verbosity.Normal;
+    public static bool IsLoud => Verbosity == Verbosity.Loud;
+    public static bool IsNaggy => Verbosity == Verbosity.Nagging;
 }
 
 internal sealed class Configuration
@@ -24,17 +42,13 @@ internal sealed class Configuration
     public string? PackagePrefix { get; }
     public string DefaultPackagePrefix => "FirebirdDb";
 
-    public string AssetManagerVersion { get; }
+    public VersionRange AssetManagerVersion { get; }
+    public ReleaseVersion InitialPackageVersion { get; }
     public string AssetManagerPackageName { get; }
 
     public BuildType BuildType { get; }
     public List<FirebirdVersion> VersionsToBuild { get; }
     public DateTimeOffset BuildDate { get; }
-
-    public static bool IsSilent => Instance.Verbosity == Verbosity.Silent;
-    public static bool IsNormal => Instance.Verbosity >= Verbosity.Normal;
-    public static bool IsLoud => Instance.Verbosity == Verbosity.Loud;
-    public static bool IsNaggy => Instance.Verbosity == Verbosity.Nagging;
 
     public static void Initialize(
         string? packagePrefix,
@@ -44,7 +58,9 @@ internal sealed class Configuration
         string metadataFilePath,
         List<FirebirdVersion> versionsToBuild,
         bool forceDownload,
-        BuildType buildType)
+        BuildType buildType,
+        VersionRange assetManagerVersion,
+        ReleaseVersion initialPackageVersion)
     {
         Instance = new Configuration(
             packagePrefix,
@@ -54,7 +70,9 @@ internal sealed class Configuration
             metadataFilePath,
             versionsToBuild,
             forceDownload,
-            buildType);
+            buildType,
+            assetManagerVersion,
+            initialPackageVersion);
     }
 
     private Configuration(
@@ -65,8 +83,12 @@ internal sealed class Configuration
         string metadataFilePath,
         List<FirebirdVersion> versionsToBuild,
         bool forceDownload,
-        BuildType buildType)
+        BuildType buildType,
+        VersionRange assetManagerVersion,
+        ReleaseVersion initialPackageVersion)
     {
+        LogConfig.Initialize(verbosity);
+
         PackagePrefix = packagePrefix;
         Verbosity = verbosity;
         WorkspaceDirectoryRoot = workspaceDirectory;
@@ -81,7 +103,8 @@ internal sealed class Configuration
         UnpackWorkingDirectory = Path.Combine(WorkspaceDirectoryRoot, "unpacked");
         PackageWorkingDirectory = Path.Combine(WorkspaceDirectoryRoot, "structure");
         DownloadDirectory = Path.Combine(WorkspaceDirectoryRoot, "downloads");
-        AssetManagerVersion = "1.0.1";
+        AssetManagerVersion = assetManagerVersion; //"[1.0.2,2.0.0)";
+        InitialPackageVersion = initialPackageVersion;
 
         AssetManagerPackageName = $"{DefaultPackagePrefix}.Embedded.NativeAssetManager";
         if (packagePrefix != null)

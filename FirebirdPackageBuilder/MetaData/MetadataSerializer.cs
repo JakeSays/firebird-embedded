@@ -80,12 +80,18 @@ internal static class MetadataSerializer
 
             static XElement SerializeRelease(PackageRelease release)
             {
+                const string dateFormat = "yyyy-MM-ddTHH:mm:ss.fffzzz";
+
                 var el = new XElement(
                     ReleaseEl,
                     new XAttribute(RidAttr, release.Rid),
                     new XAttribute(PackageVersionAttr, release.PackageVersion.ToString(VersionStyle.Nuget)),
                     new XAttribute(NativeAssetsVersionAttr, release.FirebirdRelease),
-                    new XAttribute(PackageReleaseDateAttr, release.ReleaseDate.ToString("O")));
+                    new XAttribute(BuildDateAttr, release.BuildDate.ToString(dateFormat)));
+                if (release.PublishDate != null)
+                {
+                    el.Add(new XAttribute(PublishDateAttr, release.PublishDate.Value.ToString(dateFormat)));
+                }
                 return el;
             }
         }
@@ -128,24 +134,28 @@ internal static class MetadataSerializer
             {
                 Expected(ReleaseEl, releaseXml);
                 yield return null;
-
                 break;
             }
 
-            var releaseDate = (DateTimeOffset?) releaseXml.Attribute(PackageReleaseDateAttr);
-            if (releaseDate is null)
+            var buildDate = (DateTimeOffset?) releaseXml.Attribute(BuildDateAttr);
+            if (buildDate is null)
             {
-                IlFormed(xml, "Invalid or missing release date");
-                yield return null;
-
-                break;
+                //try old attribute
+                buildDate = (DateTimeOffset?) releaseXml.Attribute(PackageReleaseDateAttr);
+                if (buildDate is null)
+                {
+                    IlFormed(xml, "Invalid or missing build date");
+                    yield return null;
+                    break;
+                }
             }
+
+            var publishDate = (DateTimeOffset?) releaseXml.Attribute(PublishDateAttr);
 
             var rid = ParseRid(releaseXml);
             if (rid is null)
             {
                 yield return null;
-
                 break;
             }
 
@@ -153,7 +163,6 @@ internal static class MetadataSerializer
             if (packageVersion is null)
             {
                 yield return null;
-
                 break;
             }
 
@@ -161,16 +170,16 @@ internal static class MetadataSerializer
             if (nativeAssetsVersion is null)
             {
                 yield return null;
-
                 break;
             }
 
             var releaseInfo = new PackageRelease(
                 (Rid) rid,
-                (DateTimeOffset) releaseDate,
+                (DateTimeOffset) buildDate,
                 fbVersion,
                 (ReleaseVersion) packageVersion,
-                (ReleaseVersion) nativeAssetsVersion);
+                (ReleaseVersion) nativeAssetsVersion,
+                publishDate);
 
             yield return releaseInfo;
         }
@@ -263,6 +272,8 @@ internal static class MetadataSerializer
 
     private static readonly XName FirebirdVersionAttr = "FirebirdVersion";
     private static readonly XName NativeAssetsVersionAttr = "NativeAssetsVersion";
+    private static readonly XName BuildDateAttr = "BuildDate";
+    private static readonly XName PublishDateAttr = "PublishDate";
     private static readonly XName PackageReleaseDateAttr = "PackageReleaseDate";
     private static readonly XName PackageVersionAttr = "PackageVersion";
     private static readonly XName RidAttr = "Rid";

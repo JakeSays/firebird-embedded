@@ -1,3 +1,4 @@
+using NuGet.Common;
 using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
@@ -12,8 +13,6 @@ internal sealed class NugetPackageBuilder
 {
     private readonly ReadmeTemplate _readmeTemplate = new ();
     private readonly TargetFileTemplate _targetFileTemplate = new ();
-
-    private static readonly NugetLogger Logger = new();
 
     private readonly Configuration _config;
 
@@ -55,9 +54,9 @@ internal sealed class NugetPackageBuilder
         {
             var (currentRelease, releaseChanged) = CalculatePackageRelease(details);
 
-            if (!releaseChanged)
+            if (!releaseChanged && _config.BuildType != BuildType.Force)
             {
-                if (Configuration.IsNormal)
+                if (LogConfig.IsNormal)
                 {
                     StdOut.NormalLine($"Meta package '{details.PackageId}' version {currentRelease.PackageVersion.ToString(VersionStyle.Nuget)} is unchanged.");
                 }
@@ -72,7 +71,7 @@ internal sealed class NugetPackageBuilder
 
             var builder = PreparePackageBuilder(details.PackageId,
                 currentRelease.PackageVersion.ToString(VersionStyle.Nuget),
-                $"Binary assets for embedded FirebirdSQL {release.VersionLong} {details.Platform}.");
+                $"Binary assets for embedded FirebirdSQL {release.VersionLong} ({details.Release.ReleaseVersion}) {details.Platform} {string.Join(", ", details.Architectures)}.");
 
             AddFrameworkDependency(builder, ".NETStandard2.0");
             AddFrameworkDependency(builder, ".NETFramework4.8");
@@ -105,7 +104,7 @@ internal sealed class NugetPackageBuilder
             var packageFileName = $"{details.PackageId}.{currentRelease.PackageVersion.ToString(VersionStyle.Nuget)}.nupkg";
             var packagePath = Path.Combine(_config.PackageOutputDirectory, packageFileName);
 
-            if (Configuration.IsNormal)
+            if (LogConfig.IsNormal)
             {
                 StdOut.NormalLine($"Building package '{packageFileName}'");
             }
@@ -128,7 +127,11 @@ internal sealed class NugetPackageBuilder
         if (currentRelease == null)
         {
             currentRelease = PackageRelease.Initial(
-                details.Rid, _config.BuildDate, details.Release.Version, details.Release.ReleaseVersion);
+                details.Rid,
+                _config.BuildDate,
+                details.Release.Version,
+                details.Release.ReleaseVersion,
+                _config.InitialPackageVersion);
         }
         else if (currentRelease.FirebirdRelease != details.Release.ReleaseVersion)
         {
@@ -143,7 +146,7 @@ internal sealed class NugetPackageBuilder
         else if (_config.BuildType == BuildType.Force)
         {
             //we are rebuilding the exact same package version.. not sure why we would want to do this beyond testing.
-            currentRelease = currentRelease.WithReleaseDate(_config.BuildDate);
+            currentRelease.BuildDate = _config.BuildDate;
         }
         // if nothing changed then this is a 'normal' build, no firebird version bump, no package version bump.
 
@@ -156,9 +159,9 @@ internal sealed class NugetPackageBuilder
 
         if (!releaseChanged)
         {
-            if (Configuration.IsNormal)
+            if (LogConfig.IsNormal)
             {
-                StdOut.NormalLine($"Asset package '{asset.PackageId}' version {currentRelease.PackageVersion.ToString(VersionStyle.Nuget)} is unchanged.");
+                StdOut.NormalLine($"Asset package '{asset.PackageId}' version {currentRelease.PackageVersion.ToString(VersionStyle.Nuget)} is unchanged, build skipped.");
             }
             return;
         }
@@ -169,7 +172,7 @@ internal sealed class NugetPackageBuilder
 
         var builder = PreparePackageBuilder(asset.PackageId,
             currentRelease.PackageVersion.ToString(VersionStyle.Nuget),
-            $"Binary assets for embedded FirebirdSQL {asset.Release.VersionLong} {asset.Platform} {asset.Architecture}.");
+            $"Binary assets for embedded FirebirdSQL {asset.Release.VersionLong} ({asset.Release.ReleaseVersion}) {asset.Platform} {asset.Architecture}.");
 
         AddFrameworkDependency(builder, ".NETFramework4.8");
         AddFrameworkDependency(builder, ".NETStandard2.0");
@@ -193,7 +196,7 @@ internal sealed class NugetPackageBuilder
         var packageFileName = $"{asset.PackageId}.{currentRelease.PackageVersion.ToString(VersionStyle.Nuget)}.nupkg";
         var packagePath = Path.Combine(_config.PackageOutputDirectory, packageFileName);
 
-        if (Configuration.IsNormal)
+        if (LogConfig.IsNormal)
         {
             StdOut.NormalLine($"Building package '{packageFileName}'");
         }
@@ -213,7 +216,7 @@ internal sealed class NugetPackageBuilder
         builder.DependencyGroups.Add(
             new PackageDependencyGroup(NuGetFramework.Parse(tfm),
             [
-                new PackageDependency(_config.AssetManagerPackageName, VersionRange.Parse(_config.AssetManagerVersion))
+                new PackageDependency(_config.AssetManagerPackageName, _config.AssetManagerVersion)
             ]));
     }
 
@@ -254,7 +257,7 @@ internal sealed class NugetPackageBuilder
 
     public static PackageBuilder PreparePackageBuilder(string packageId, string packageVersion, string description)
     {
-        var builder = new PackageBuilder(false, Logger)
+        var builder = new PackageBuilder(false, NullLogger.Instance)
         {
             Id = packageId,
             Version = NuGetVersion.Parse(packageVersion),

@@ -11,4 +11,19 @@ internal static class IoHelpers
 
         Directory.CreateDirectory(directory);
     }
+
+    public static bool SafeCreateDirectory(string directory)
+    {
+        ArgumentNullException.ThrowIfNull(directory);
+
+        try
+        {
+            Directory.CreateDirectory(directory);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
 }

@@ -37,12 +37,14 @@ namespace Std.CommandLine
         internal RootCommand RootCommand { get; }
 
         internal List<string> Args { get; set; }
+        public IReadOnlyList<string> UnmatchedArgs { get; private set; }
 
         public StdApplication(List<string>? args, string? applicationName = null)
         {
             Args = args ?? [];
             RootCommand = new RootCommand(applicationName ?? ExecutableName);
             CommandLine = new CommandLineBuilder(this, false);
+            UnmatchedArgs = new List<string>();
         }
 
         public ICommandLineBuilder CommandLine { get; }
@@ -60,8 +62,9 @@ namespace Std.CommandLine
         internal HelpOption? HelpOption { get; set; }
 
         internal ValidationMessages? ValidationMessages { get; set; }
+        public bool ExitOnParseError { get; set; }
 
-        protected IReadOnlyList<string>? InternalBuild()
+        protected BuildStatus InternalBuild()
         {
             var rootCommand = RootCommand;
             rootCommand.TreatUnmatchedTokensAsErrors = TreatUnmatchedArgsAsErrors;
@@ -79,10 +82,13 @@ namespace Std.CommandLine
             RootCommand.ImplicitParser = _parser;
 
             ParseResult = _parser.Parse(Args);
+            ((List<string>) UnmatchedArgs).AddRange(ParseResult.UnmatchedTokens);
 
-            if (ParseResult.Errors.Count <= 0)
+            if (ParseResult.Errors.Count == 0)
             {
-                return ParseResult.UnmatchedTokens.ToList();
+                return TreatUnmatchedArgsAsErrors
+                    ? BuildStatus.Failure
+                    : BuildStatus.Success;
             }
 
             foreach (var error in ParseResult.Errors)
@@ -90,18 +96,25 @@ namespace Std.CommandLine
                 DefaultConsoles.StdErr.RedLine(error.Message);
             }
 
-            return null;
+            return BuildStatus.Failure;
         }
 
-        internal IReadOnlyList<string> Build()
+        internal BuildStatus Build()
         {
-            var unmatchedArgs = InternalBuild();
-            return unmatchedArgs ?? Array.Empty<string>();
+            var status = InternalBuild();
+            if (status != BuildStatus.Success &&
+                ExitOnParseError)
+            {
+                Environment.Exit(IStdApplication.ExitCodeFailure);
+            }
+
+            return status;
         }
 
         public int Run()
         {
             var result = ParseResult!.Invoke();
+            Environment.ExitCode = result;
             return result;
         }
 
@@ -112,9 +125,11 @@ namespace Std.CommandLine
         internal TResult? ParseCommandLine<TResult>(out IReadOnlyList<string> unmatchedArgs)
             where TResult : class, new()
         {
-            unmatchedArgs = Build();
+            var status = Build();
 
-            if (unmatchedArgs.Count == 0)
+            unmatchedArgs = UnmatchedArgs;
+
+            if (status != BuildStatus.Success)
             {
                 return null;
             }

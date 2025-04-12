@@ -5,7 +5,7 @@ namespace Std.FirebirdEmbedded.Tools;
 
 internal static class ReleaseBuilder
 {
-    public static bool DoIt(Configuration config, PackageMetadata metadata)
+    public static bool Build(Configuration config, PackageMetadata metadata)
     {
         var releases = DownloadAssets(config);
         if (releases == null)
@@ -28,7 +28,7 @@ internal static class ReleaseBuilder
 
     private static bool BuildPackages(Configuration config, FirebirdReleases releases, PackageMetadata metadata)
     {
-        if (Configuration.IsNormal)
+        if (LogConfig.IsNormal)
         {
             StdOut.NormalLine("Building nuget packages.");
         }
@@ -44,7 +44,7 @@ internal static class ReleaseBuilder
 
         if (config.VersionsToBuild.Count == 0)
         {
-            if (Configuration.IsNormal)
+            if (LogConfig.IsNormal)
             {
                 StdOut.NormalLine("All versions current, nothing to build.");
             }
@@ -80,16 +80,16 @@ internal static class ReleaseBuilder
             //a package has been released for this product version so remove it from the build
             config.VersionsToBuild.Remove(release.Version);
 
-            if (Configuration.IsNormal)
+            if (LogConfig.IsNormal)
             {
-                StdOut.NormalLine($"Firebird {release.VersionLong} was released in package version {highestRelease.PackageVersion.ToString(VersionStyle.Nuget)} on {highestRelease.ReleaseDate:yyyy-MM-dd hh:mm:ss}, excluding from build.");
+                StdOut.NormalLine($"Firebird {release.VersionLong} was released in package version {highestRelease.PackageVersion.ToString(VersionStyle.Nuget)} on {highestRelease.BuildDate:yyyy-MM-dd hh:mm:ss}, excluding from build.");
             }
         }
     }
 
     private static bool BuildStructures(Configuration config, FirebirdReleases releases)
     {
-        if (Configuration.IsNormal)
+        if (LogConfig.IsNormal)
         {
             StdOut.NormalLine("Building package structures.");
         }
@@ -102,7 +102,7 @@ internal static class ReleaseBuilder
 
     private static bool UnPack(Configuration config, FirebirdReleases releases)
     {
-        if (Configuration.IsNormal)
+        if (LogConfig.IsNormal)
         {
             StdOut.NormalLine("Unpacking assets.");
         }
@@ -118,7 +118,7 @@ internal static class ReleaseBuilder
         using var rm = new GithubReleaseManager(config);
         var releases = rm.GetLatestReleases();
 
-        if (Configuration.IsNormal)
+        if (LogConfig.IsNormal)
         {
             StdOut.NormalLine($"Current versions are: V3={releases.V3.ReleaseVersion}, V4={releases.V4.ReleaseVersion}, V5={releases.V5.ReleaseVersion}");
         }

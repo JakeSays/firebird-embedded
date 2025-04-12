@@ -40,6 +40,15 @@ internal readonly record struct ReleaseVersion(
             Patch = Patch + 1
         };
 
+    public static ReleaseVersion Parse(string value, VersionStyle style = VersionStyle.Firebird)
+    {
+        if (!TryParse(value, out var version, style))
+        {
+            throw new FormatException($"Invalid version format: {value}");
+        }
+        return (ReleaseVersion) version!;
+    }
+
     public static bool TryParse(string value, out ReleaseVersion? releaseVersion, VersionStyle style = VersionStyle.Firebird)
     {
         releaseVersion = null;

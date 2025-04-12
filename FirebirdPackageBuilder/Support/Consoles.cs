@@ -88,10 +88,12 @@ internal class SystemConsole
         return this;
     }
 
+    public void BlankLine() => SysCon.WriteLine();
+
     public void ResetColor() => SysCon.ResetColor();
 
     public SystemConsole Write(ConsoleColor color, string text) => WriteColor(color, text);
-    public SystemConsole WriteLine(ConsoleColor color, string text) => WriteColor(color, text);
+    public SystemConsole WriteLine(ConsoleColor color, string text) => WriteColorLine(color, text);
 
     public SystemConsole Red(string text) => WriteColor(ConsoleColor.Red, text);
     public SystemConsole RedLine(string text) => WriteColorLine(ConsoleColor.Red, text);

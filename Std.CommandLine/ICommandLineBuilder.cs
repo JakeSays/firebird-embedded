@@ -7,43 +7,52 @@ using Std.CommandLine.Commands;
 using Std.CommandLine.Options;
 
 
-namespace Std.CommandLine
+namespace Std.CommandLine;
+
+public enum BuildStatus
 {
-    public interface ICommandLineBuilder
-        : HandlerProvider<ICommandLineBuilder>
-    {
-        void Build();
+    Success,
+    Failure
+}
 
-        TResult? ParseCommandLine<TResult>()
-            where TResult : class, new();
+public interface ICommandLineBuilder
+    : HandlerProvider<ICommandLineBuilder>
+{
+    BuildStatus Build();
 
-        TResult? ParseCommandLine<TResult>(out IReadOnlyList<string> unmatchedArgs)
-            where TResult : class, new();
+    IReadOnlyList<string> UnmatchedArgs { get; }
 
-        ICommandLineBuilder UnmatchedArgsAreErrors();
-        ICommandLineBuilder Command(Action<CommandBuilder> config);
-        ICommandLineBuilder Argument<TArg>(Action<ArgumentBuilder<TArg>> config);
-        ICommandLineBuilder GlobalOption<TOpt>(Action<OptionBuilder<TOpt>> config);
-        ICommandLineBuilder Option<TOpt>(Action<OptionBuilder<TOpt>> config);
+    TResult? ParseCommandLine<TResult>()
+        where TResult : class, new();
 
-        // ScriptApplicationBuilder FileArg(Action<FileSystemArgumentBuilder<FileInfo>> config);
-        // ScriptApplicationBuilder? DirectoryArg(Action<FileSystemArgumentBuilder<DirectoryInfo>> config);
+    TResult? ParseCommandLine<TResult>(out IReadOnlyList<string> unmatchedArgs)
+        where TResult : class, new();
 
-        ICommandLineBuilder EnableDirectives();
-        ICommandLineBuilder EnablePosixBundling();
-        ICommandLineBuilder SpaceSeparatedResponseFile();
-        ICommandLineBuilder LineSeparatedResponseFile();
-        ICommandLineBuilder NoResponseFile();
-        ICommandLineBuilder WithHelp();
+    ICommandLineBuilder UnmatchedArgsAreErrors();
+    ICommandLineBuilder Command(Action<CommandBuilder> config);
+    ICommandLineBuilder Argument<TArg>(Action<ArgumentBuilder<TArg>> config);
+    ICommandLineBuilder GlobalOption<TOpt>(Action<OptionBuilder<TOpt>> config);
+    ICommandLineBuilder Option<TOpt>(Action<OptionBuilder<TOpt>> config);
 
-        ICommandLineBuilder WithVersion(string version);
-        ICommandLineBuilder WithVersion(Assembly versionedAssembly);
-        ICommandLineBuilder WithVersion(Func<string> versionProvider);
+    // ScriptApplicationBuilder FileArg(Action<FileSystemArgumentBuilder<FileInfo>> config);
+    // ScriptApplicationBuilder? DirectoryArg(Action<FileSystemArgumentBuilder<DirectoryInfo>> config);
+
+    ICommandLineBuilder EnableDirectives();
+    ICommandLineBuilder EnablePosixBundling();
+    ICommandLineBuilder SpaceSeparatedResponseFile();
+    ICommandLineBuilder LineSeparatedResponseFile();
+    ICommandLineBuilder NoResponseFile();
+    ICommandLineBuilder WithHelp();
+
+    ICommandLineBuilder WithExitOnParseError();
+
+    ICommandLineBuilder WithVersion(string version);
+    ICommandLineBuilder WithVersion(Assembly versionedAssembly);
+    ICommandLineBuilder WithVersion(Func<string> versionProvider);
 //        ScriptApplicationBuilder EnableWaitForDebugger();
-        ICommandLineBuilder CancelOnProcessTermination();
-        ICommandLineBuilder WithExceptionHandler(Func<Exception,
-            (ExceptionBehavior Behavior, int TerminateExitCode)>? exceptionHandler);
-        ICommandLineBuilder Flag(Action<FlagOptionBuilder> config);
-        ICommandLineBuilder GlobalFlag(Action<FlagOptionBuilder> config);
-    }
+    ICommandLineBuilder CancelOnProcessTermination();
+    ICommandLineBuilder WithExceptionHandler(Func<Exception,
+        (ExceptionBehavior Behavior, int TerminateExitCode)>? exceptionHandler);
+    ICommandLineBuilder Flag(Action<FlagOptionBuilder> config);
+    ICommandLineBuilder GlobalFlag(Action<FlagOptionBuilder> config);
 }

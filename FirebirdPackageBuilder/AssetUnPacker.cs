@@ -9,7 +9,7 @@ internal sealed class AssetUnPacker
 {
     public bool UnpackRelease(FirebirdRelease release)
     {
-        if (Configuration.IsNormal)
+        if (LogConfig.IsNormal)
         {
             StdOut.NormalLine($"Unpacking release {release.Name}");
         }
@@ -27,7 +27,7 @@ internal sealed class AssetUnPacker
 
     private bool UnpackAsset(FirebirdAsset asset)
     {
-        if (Configuration.IsNormal)
+        if (LogConfig.IsNormal)
         {
             StdOut.NormalLine($"Unpacking asset '{asset.Name}'");
         }
@@ -57,7 +57,7 @@ internal sealed class AssetUnPacker
         {
             const string buildRootTarball = "buildroot.tar.gz";
 
-            if (Configuration.IsLoud)
+            if (LogConfig.IsLoud)
             {
                 StdOut.DarkBlueLine($"Unpacking: '{asset.LocalPath}'.");
             }
@@ -94,7 +94,7 @@ internal sealed class AssetUnPacker
             Func<string, bool>? fileFilter = null,
             List<(string Link, string Target)>? symbolicLinks = null)
         {
-            if (Configuration.IsLoud)
+            if (LogConfig.IsLoud)
             {
                 StdOut.DarkBlueLine($"un-taring '{tarballPath}'");
             }
@@ -108,7 +108,7 @@ internal sealed class AssetUnPacker
                 {
                     if (entry.EntryType == TarEntryType.HardLink)
                     {
-                        if (Configuration.IsLoud)
+                        if (LogConfig.IsLoud)
                         {
                             StdOut.YellowLine($"Encountered a hard link: {entry.Name}, ignoring.");
                         }
@@ -118,7 +118,7 @@ internal sealed class AssetUnPacker
                     {
                         if (entry.Name.StartsWith("./opt"))
                         {
-                            if (Configuration.IsLoud)
+                            if (LogConfig.IsLoud)
                             {
                                 StdOut.DarkBlueLine($"Symbolic link: '{entry.Name}'.");
                             }
@@ -151,7 +151,7 @@ internal sealed class AssetUnPacker
 
         string DecompressTarball(string sourcePath, string unpackDirectory)
         {
-            if (Configuration.IsLoud)
+            if (LogConfig.IsLoud)
             {
                 StdOut.DarkBlueLine($"decompressing '{sourcePath}'");
             }
@@ -169,7 +169,7 @@ internal sealed class AssetUnPacker
 
         void UnpackZipArchive(string unpackDirectory)
         {
-            if (Configuration.IsLoud)
+            if (LogConfig.IsLoud)
             {
                 StdOut.DarkBlueLine($"un-zipping '{asset.LocalPath}'");
             }

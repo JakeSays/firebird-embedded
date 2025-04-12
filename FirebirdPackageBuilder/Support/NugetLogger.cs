@@ -1,3 +1,4 @@
+using System.Reflection;
 using NuGet.Common;
 
 
@@ -5,64 +6,138 @@ namespace Std.FirebirdEmbedded.Tools.Support;
 
 internal sealed class NugetLogger : ILogger
 {
-    public void LogDebug(string data) => Log(LogLevel.Debug, data);
+    public static readonly string LocalizedPushSuccessfulString = "Your package was pushed.";
+    private static NugetLogger? _instance;
 
-    public void LogVerbose(string data) => Log(LogLevel.Verbose, data);
+    private readonly Func<LogLevel, string, bool>? _messageFilter;
 
-    public void LogInformation(string data) => Log(LogLevel.Information, data);
+    static NugetLogger()
+    {
+        var assy = typeof(NuGet.Protocol.CachingSourceProvider).Assembly;
+        if (assy == null!)
+        {
+            return;
+        }
+        var stringsType = assy.GetType("NuGet.Protocol.Strings");
+        if (stringsType == null)
+        {
+            return;
+        }
 
-    public void LogMinimal(string data) => Log(LogLevel.Minimal, data);
+        var stringProp = stringsType.GetProperty("PushCommandPackagePushed", BindingFlags.Static | BindingFlags.NonPublic);
+        if (stringProp == null)
+        {
+            return;
+        }
 
-    public void LogWarning(string data) => Log(LogLevel.Warning, data);
+        var value = stringProp.GetValue(null) as string;
+        if (value == null)
+        {
+            return;
+        }
 
-    public void LogError(string data) => Log(LogLevel.Error, data);
+        LocalizedPushSuccessfulString = value;
+    }
 
-    public void LogInformationSummary(string data) => Log(LogLevel.Information, data);
+    public Verbosity Verbosity { get; }
+
+    public void LogDebug(string data) => DoLog(LogLevel.Debug, data);
+
+    public void LogVerbose(string data) => DoLog(LogLevel.Verbose, data);
+
+    public void LogInformation(string data) => DoLog(LogLevel.Information, data);
+
+    public void LogMinimal(string data) => DoLog(LogLevel.Minimal, data);
+
+    public void LogWarning(string data) => DoLog(LogLevel.Warning, data);
+
+    public void LogError(string data) => DoLog(LogLevel.Error, data);
+
+    public void LogInformationSummary(string data) => DoLog(LogLevel.Information, data);
+
+    public static NugetLogger Instance => _instance ?? new NugetLogger(Verbosity.Normal, null);
+
+    public static void InitializeDefault(Verbosity verbosity) =>
+        _instance = Create(verbosity);
+
+    public static NugetLogger Create(Verbosity verbosity, Func<LogLevel, string, bool>? filter = null)
+    {
+        return new NugetLogger(verbosity, filter);
+    }
+
+    private NugetLogger(Verbosity verbosity, Func<LogLevel, string, bool>? filter)
+    {
+        Verbosity = verbosity;
+        _messageFilter = filter;
+    }
 
     public void Log(LogLevel level, string data)
     {
-        var color = Color(level);
-        var prefix = Prefix(level);
-
-        StdOut.WriteLine(color, $"{prefix} {data}");
+        DoLog(level, data);
     }
 
     public Task LogAsync(LogLevel level, string data)
     {
-        Log(level, data);
+        DoLog(level, data);
         return Task.CompletedTask;
     }
 
     public void Log(ILogMessage message)
     {
-        var color = Color(message.Level);
-        var prefix = Prefix(message.Level);
-
-        var warnText = message.Level == LogLevel.Warning
-            ? $" ({message.WarningLevel})"
-            : "";
-        var codeText = message.Code != NuGetLogCode.Undefined
-            ? $" {message.Code}"
-            : "";
-
-        StdOut.WriteLine(color, $"{prefix}{codeText}{warnText}: {message.Message}");
+        DoLog(message.Level, message.Message, message);
     }
 
     public Task LogAsync(ILogMessage message)
     {
-        Log(message);
+        DoLog(message.Level, message.Message, message);
         return Task.CompletedTask;
+    }
+
+    private void DoLog(LogLevel level, string message, ILogMessage? logMessage = null)
+    {
+        if (_messageFilter?.Invoke(level, message) == true)
+        {
+            return;
+        }
+
+        var shouldLog = level switch
+        {
+            LogLevel.Debug when Verbosity >= Verbosity.Loud => true,
+            LogLevel.Verbose when Verbosity >= Verbosity.Nagging => true,
+            LogLevel.Minimal when Verbosity > Verbosity.Silent => true,
+            LogLevel.Information when Verbosity >= Verbosity.Normal => true,
+            LogLevel.Warning when Verbosity > Verbosity.Silent => true,
+            LogLevel.Error => true,
+            _ => false
+        };
+
+        if (!shouldLog)
+        {
+            return;
+        }
+
+        var color = Color(level);
+        var prefix = Prefix(level);
+
+        var warnText = level == LogLevel.Warning && logMessage != null
+            ? $" ({logMessage.WarningLevel})"
+            : "";
+        var codeText = logMessage != null && logMessage.Code != NuGetLogCode.Undefined
+            ? $" {logMessage.Code}"
+            : "";
+
+        StdOut.WriteLine(color, $"{prefix}{codeText}{warnText}: {message}");
     }
 
     private static string Prefix(LogLevel level) =>
         level switch
         {
-            LogLevel.Debug => "[DEBUG]",
+            LogLevel.Debug => "[DEBUG] ",
             LogLevel.Verbose => "[VERB] ",
             LogLevel.Minimal => "[INFO] ",
             LogLevel.Information => "[INFO] ",
             LogLevel.Warning => "[WARN] ",
-            LogLevel.Error => "[ERROR]",
+            LogLevel.Error => "[ERROR] ",
             _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
         };
 

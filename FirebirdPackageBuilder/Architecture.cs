@@ -38,7 +38,7 @@ internal static class ArchitectureExtensions
 
     public static bool TryParseArchitecture(this string value, out Architecture architecture)
     {
-        switch (value)
+        switch (value.ToLowerInvariant())
         {
             case "x32":
             case "x86":

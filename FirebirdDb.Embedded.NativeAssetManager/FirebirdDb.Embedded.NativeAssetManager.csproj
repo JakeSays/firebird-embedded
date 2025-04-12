@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <AssemblyName>FirebirdDb.Embedded.NativeAssetManager</AssemblyName>
         <RootNamespace>FirebirdSql.Embedded</RootNamespace>
-        <CurrentVersion>1.0.1</CurrentVersion>
+        <CurrentVersion>1.0.2</CurrentVersion>
         <AssemblyVersion>$(CurrentVersion).0</AssemblyVersion>
         <FileVersion>$(CurrentVersion).0</FileVersion>
         <EnableDefaultCompileItems>False</EnableDefaultCompileItems>
@@ -28,7 +28,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <IncludeBuildOutput>true</IncludeBuildOutput>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <Compile Include="FbNativeAssetManager.cs"/>
         <Compile Include="../FirebirdPackageBuilder/FirebirdVersion.cs">

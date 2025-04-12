@@ -1,6 +1,9 @@
 ﻿using System.Reflection;
+using NuGet.Versioning;
 using Std.CommandLine;
 using Std.FirebirdEmbedded.Tools.MetaData;
+using Std.FirebirdEmbedded.Tools.Publish;
+using Std.FirebirdEmbedded.Tools.Support;
 
 
 namespace Std.FirebirdEmbedded.Tools;
@@ -34,24 +37,32 @@ internal static class Program
         public string WorkDir { get; set; } = null!;
         public string? PackageDir { get; set; }
         public string? PackagePrefix { get; set; }
-        public bool Push { get; set; }
-        public string? NugetApiKey { get; set; }
         public bool ForceDownload { get; set; }
         public string MetadataFile { get; set; } = null!;
         public BuildType Type { get; set; }
+        public string? AssetManagerVersion { get; set; }
+        public string InitialPackageVersion { get; set; } = null!;
     }
 
-    private class PushArgs
+    private class PublishArgs
     {
         public Verbosity Verbosity { get; set; }
         public string? PackageDir { get; set; }
-        public string? NugetApiKey { get; set; }
+        public string NugetApiKey { get; set; } = null!;
+        public string? SourceType { get; set; }
+        public string? LocalPackageDir { get; set; }
+        public int TimeoutInSeconds { get; set; }
+        public string MetadataFile { get; set; } = null!;
+        public string? PackageVersion { get; set; }
+        public bool ForcePublish { get; set; }
     }
 
     public static void Main(string[] args)
     {
         var app = new StdApplication(args.ToList(), "Firebird Embedded Tools");
+
         app.CommandLine
+            .WithExitOnParseError()
             .WithHelp()
             .WithVersion(Assembly.GetExecutingAssembly())
             .Option<Verbosity>(o => o
@@ -62,6 +73,7 @@ internal static class Program
             )
             .Command(c => c
                 .Name("build")
+                .Description("Build native asset packages")
                 .Option<string>(o => o
                     .Alias("-w|--workdir")
                     .Name("WorkDir")
@@ -100,39 +112,83 @@ internal static class Program
                     .Name("Versions")
                     .Description("Select a firebird version to build. Can be specified multiple times. Default is to build all version.")
                 )
+                .Option<string>(o => o
+                    .Alias("--amver")
+                    .Name("AssetManagerVersion")
+                    .Singleton()
+                    .Required()
+                    .Description("Minimum asset manager version.")
+                )
                 .Flag(f => f
                     .Alias("--forcedownload")
                     .Name("ForceDownload")
                     .Description("Force download of assets from github.")
                 )
-                .Flag(f => f
-                    .Alias("--push")
-                    .Name("Push")
-                    .Description("Push packages on successful build.")
-                )
-                .Option<string?>(o => o
-                    .Alias("--apikey")
-                    .Name("NugetApiKey")
+                .Option<string>(o => o
+                    .Alias("--initver")
+                    .Name("InitialPackageVersion")
+                    .DefaultValue("1.0.1")
                     .Singleton()
-                    .Description("Nuget API Key to use when pushing.")
+                    .Description("Initial package version. Defaults to 1.0.1")
                 )
                 .OnExecute((BuildArgs bargs) => BuildPackages(bargs))
             )
             .Command(c => c
-                .Name("push")
+                .Name("publish")
+                .Description("publish native asset packages")
                 .Option<string>(o => o
                     .Alias("-p|--packagedir")
                     .Name("PackageDir")
                     .Required()
+                    .Singleton()
                     .Description("Directory for packages")
                 )
                 .Option<string?>(o => o
-                    .Alias("--apikey")
+                    .Alias("--pkgver")
+                    .Name("PackageVersion")
+                    .Singleton()
+                    .Description("Specific package version to publish")
+                )
+                .Option<string>(o => o
+                    .Alias("-m|--metadata")
+                    .Name("MetadataFile")
+                    .Required()
+                    .Singleton()
+                    .Description("Path to the metadata file")
+                )
+                .Option<string>(o => o
+                    .Alias("-k|--apikey")
                     .Name("NugetApiKey")
                     .Required()
-                    .Description("Nuget API Key to use when pushing.")
+                    .Singleton()
+                    .Description("Nuget API Key to use when pushing")
                 )
-                .OnExecute((PushArgs pargs) => PushPackages(pargs))
+                .Option<string>(o => o
+                    .Alias("-s|--source")
+                    .Name("SourceType")
+                    .Singleton()
+                    .DefaultValue("test")
+                    .Description("Package source. Options are 'prod, staging, local, test' Defaults to 'test'")
+                )
+                .Flag(f => f
+                    .Alias("--force")
+                    .Name("ForcePublish")
+                    .Description("Force publish the latest version")
+                )
+                .Option<int>(o => o
+                    .Alias("--timeout")
+                    .Name("TimeoutInSeconds")
+                    .Singleton()
+                    .DefaultValue(5 * 60)
+                    .Description("Timeout in seconds. Default is 5 minutes")
+                )
+                .Option<string?>(o => o
+                    .Alias("--localpath")
+                    .Name("LocalPackageDir")
+                    .Singleton()
+                    .Description("Local package path. Required when --source is 'local'")
+                )
+                .OnExecute((PublishArgs pargs) => PublishPackages(pargs))
             )
             .Build();
         app.Run();
@@ -140,6 +196,26 @@ internal static class Program
 
     private static int BuildPackages(BuildArgs args)
     {
+        if (!NuGetVersion.TryParse(args.AssetManagerVersion, out var minAssetManagerVersion))
+        {
+            StdErr.RedLine($"Invalid asset manager version: {args.AssetManagerVersion}");
+            return IStdApplication.ExitCodeFailure;
+        }
+
+        var maxAssetManagerVersion = new NuGetVersion(minAssetManagerVersion.Major + 1, 0, 0);
+
+        var assetManagerVersion = new VersionRange(
+            minAssetManagerVersion,
+            includeMinVersion: true,
+            maxVersion: maxAssetManagerVersion,
+            includeMaxVersion: false);
+
+        if (!ReleaseVersion.TryParse(args.InitialPackageVersion, out var initialPackageVersion, VersionStyle.Nuget))
+        {
+            StdErr.RedLine($"Invalid package version: {args.InitialPackageVersion}");
+            return IStdApplication.ExitCodeFailure;
+        }
+
         args.PackageDir ??= Path.Combine(args.WorkDir, "output");
         Configuration.Initialize(
             args.PackagePrefix,
@@ -149,7 +225,9 @@ internal static class Program
             args.MetadataFile,
             args.Versions,
             args.ForceDownload,
-            args.Type);
+            args.Type,
+            assetManagerVersion,
+            (ReleaseVersion) initialPackageVersion!);
 
         var metadata = MetadataSerializer.Load(Configuration.Instance.MetadataFilePath);
         if (metadata == null)
@@ -157,7 +235,7 @@ internal static class Program
             return IStdApplication.ExitCodeFailure;
         }
 
-        var result = ReleaseBuilder.DoIt(Configuration.Instance, metadata);
+        var result = ReleaseBuilder.Build(Configuration.Instance, metadata);
         if (result && metadata.Changed)
         {
             MetadataSerializer.Save(metadata, Configuration.Instance.MetadataFilePath);
@@ -168,9 +246,104 @@ internal static class Program
             : IStdApplication.ExitCodeFailure;
     }
 
-    private static int PushPackages(PushArgs pargs)
+    private static int PublishPackages(PublishArgs pargs)
     {
-        return 0;
+        LogConfig.Initialize(pargs.Verbosity);
+        var metadata = MetadataSerializer.Load(pargs.MetadataFile);
+        if (metadata == null)
+        {
+            return IStdApplication.ExitCodeFailure;
+        }
+
+        var result = PublishCommon(pargs, metadata);
+        if (result != PublishStatus.Failed &&
+            metadata.Changed)
+        {
+            MetadataSerializer.Save(metadata, pargs.MetadataFile);
+        }
+
+        return result switch
+        {
+            PublishStatus.Success => IStdApplication.ExitCodeSuccess,
+            PublishStatus.Failed => IStdApplication.ExitCodeFailure,
+            PublishStatus.CompletedWithErrors => 2,
+            _ => IStdApplication.ExitCodeFailure
+        };
+    }
+
+    private static PublishStatus PublishCommon(PublishArgs args, PackageMetadata metadata)
+    {
+        if (!Directory.Exists(args.PackageDir))
+        {
+            StdErr.RedLine($"Package directory '{args.PackageDir}' does not exist.");
+            return PublishStatus.Failed;
+        }
+
+        var filter = args.PackageVersion != null
+            ? $"*.{args.PackageVersion}.nupkg"
+            : "*.nupkg";
+        var packagePaths = Directory.GetFiles(args.PackageDir, filter, SearchOption.TopDirectoryOnly)
+            .ToList();
+
+        if (packagePaths.Count == 0)
+        {
+            if (LogConfig.IsNormal)
+            {
+                StdErr.YellowLine("No packages found, nothing to publish.");
+            }
+            return PublishStatus.Success;
+        }
+
+        var source = args.SourceType?.ToLowerInvariant()
+            switch
+            {
+                null => NugetSource.Staging,
+                "staging" => NugetSource.Staging,
+                "prod" => NugetSource.Production,
+                "local" => NugetSource.LocalDirectory,
+                "test" => NugetSource.TestServer,
+                _ => (NugetSource?) null,
+            };
+
+        if (source == null)
+        {
+            StdErr.RedLine($"Invalid source type '{args.SourceType}'.");
+            return PublishStatus.Failed;
+        }
+
+        if (source == NugetSource.LocalDirectory)
+        {
+            if (args.LocalPackageDir == null)
+            {
+                StdErr.RedLine("Local publish directory is required with source type 'local'.");
+                return PublishStatus.Failed;
+            }
+
+            if (!IoHelpers.SafeCreateDirectory(args.LocalPackageDir))
+            {
+                StdErr.RedLine($"Could not create local publish directory '{args.LocalPackageDir}'.");
+                return PublishStatus.Failed;
+            }
+        }
+
+        try
+        {
+            var pusher = new PackagePublisher((NugetSource) source, args.LocalPackageDir);
+            var status = pusher.Publish(
+                metadata,
+                packagePaths,
+                args.NugetApiKey,
+                args.TimeoutInSeconds,
+                true,
+                args.ForcePublish);
+
+            return status;
+        }
+        catch (Exception ex)
+        {
+            StdErr.RedLine($"Error publishing: {ex.Message}");
+            return PublishStatus.Failed;
+        }
     }
 }
 

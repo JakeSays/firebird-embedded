@@ -149,7 +149,8 @@ namespace Std.CommandLine
             return this;
         }
 
-        public void Build() => _application.Build();
+        public BuildStatus Build() => _application.Build();
+        public IReadOnlyList<string> UnmatchedArgs => _application.UnmatchedArgs;
 
         public TResult? ParseCommandLine<TResult>()
             where TResult : class, new() =>
@@ -192,6 +193,12 @@ namespace Std.CommandLine
         public ICommandLineBuilder WithHelp()
         {
             _application.AddHelpOption();
+            return this;
+        }
+
+        public ICommandLineBuilder WithExitOnParseError()
+        {
+            _application.ExitOnParseError = true;
             return this;
         }
 

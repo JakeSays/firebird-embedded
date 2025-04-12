@@ -23,7 +23,7 @@ internal sealed class PackageStructureBuilder
 
     public bool BuildStructures(FirebirdRelease release)
     {
-        if (Configuration.IsNormal)
+        if (LogConfig.IsNormal)
         {
             StdOut.NormalLine($"Building structures for release '{release.Name}'");
         }
@@ -54,7 +54,7 @@ internal sealed class PackageStructureBuilder
 
     private void CreateConsolidatedPackageStructure(ConsolidatedPackageDetails details)
     {
-        if (Configuration.IsLoud)
+        if (LogConfig.IsLoud)
         {
             StdOut.DarkBlueLine($"Building structure for consolidated package '{details.PackageId}'");
         }
@@ -64,7 +64,7 @@ internal sealed class PackageStructureBuilder
 
     private void CreatePackageStructure(FirebirdVersion version, FirebirdAsset asset)
     {
-        if (Configuration.IsLoud)
+        if (LogConfig.IsLoud)
         {
             StdOut.DarkBlueLine($"Building structure for package '{asset.PackageId}'");
         }
@@ -101,7 +101,7 @@ internal sealed class PackageStructureBuilder
 
     private void CopyFile(FirebirdAsset asset, string fileName, string destRootDirectory)
     {
-        if (Configuration.IsNaggy)
+        if (LogConfig.IsNaggy)
         {
             StdOut.DarkGreenLine($"Copying file '{fileName}' to '{destRootDirectory}'");
         }
@@ -119,7 +119,7 @@ internal sealed class PackageStructureBuilder
     {
         var destPath = Path.Combine(destRootDirectory, LicenseFileName);
 
-        if (Configuration.IsNaggy)
+        if (LogConfig.IsNaggy)
         {
             StdOut.DarkGreenLine($"Writing Licenses file to '{destPath}'");
         }
@@ -132,7 +132,7 @@ internal sealed class PackageStructureBuilder
     {
         var destPath = Path.Combine(destRootDirectory, IconFileName);
 
-        if (Configuration.IsNaggy)
+        if (LogConfig.IsNaggy)
         {
             StdOut.DarkGreenLine($"Writing icon file to '{destPath}'");
         }
