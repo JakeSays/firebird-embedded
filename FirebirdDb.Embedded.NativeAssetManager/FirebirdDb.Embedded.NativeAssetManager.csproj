@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <AssemblyName>FirebirdDb.Embedded.NativeAssetManager</AssemblyName>
         <RootNamespace>FirebirdSql.Embedded</RootNamespace>
-        <CurrentVersion>1.0.4</CurrentVersion>
+        <CurrentVersion>1.0.5</CurrentVersion>
         <AssemblyVersion>$(CurrentVersion).0</AssemblyVersion>
         <FileVersion>$(CurrentVersion).0</FileVersion>
         <EnableDefaultCompileItems>False</EnableDefaultCompileItems>

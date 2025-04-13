@@ -18,7 +18,6 @@ public static class FbNativeAssetManager
 
         var versionedPath = Path.Combine(basePath, version.ToString());
 
-        Console.WriteLine($"***** {version}: {versionedPath}");
         if (!Directory.Exists(versionedPath))
         {
             return null;
