@@ -1,4 +1,4 @@
-namespace Std.FirebirdEmbedded.Tools;
+namespace Std.FirebirdEmbedded.Tools.Build;
 
 internal enum NugetDestination
 {

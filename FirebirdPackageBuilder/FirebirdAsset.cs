@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Std.FirebirdEmbedded.Tools.Build;
 
 
 namespace Std.FirebirdEmbedded.Tools;
@@ -13,12 +14,13 @@ internal sealed class FirebirdAsset : IPackageDetails
 
     public string LocalPath { get; }
     public string UnpackedDirectory { get; }
+    public string UnpackedBaseDirectory { get; }
     public string PackageRootDirectory { get; }
 
     public List<NugetFile> NugetFiles { get; } = [];
 
     [field: AllowNull, MaybeNull]
-    public string PropertySuffix => field ??= $"{Release.Version}{Platform}{Architecture}";
+    public string PropertySuffix => field ??= $"{Release.Product}{Platform}{Architecture}";
 
     public ReleaseVersion Version { get; }
     public string Name { get; }
@@ -45,7 +47,7 @@ internal sealed class FirebirdAsset : IPackageDetails
         uint downloadSize,
         bool uploaded,
         FirebirdRelease release,
-        Configuration config)
+        BuildConfiguration config)
     {
         Version = version;
         Name = name;
@@ -62,7 +64,7 @@ internal sealed class FirebirdAsset : IPackageDetails
 
         release.AddAsset(this);
 
-        PackageId = $"{config.DefaultPackagePrefix}.Embedded.{Release.Version}.NativeAssets.{Platform}.{Architecture}";
+        PackageId = $"{config.DefaultPackagePrefix}.Embedded.{Release.Product}.NativeAssets.{Platform}.{Architecture}";
         if (config.PackagePrefix != null)
         {
             PackageId = $"{config.PackagePrefix}.{PackageId}";
@@ -72,14 +74,20 @@ internal sealed class FirebirdAsset : IPackageDetails
 
         LocalPath = Path.Combine(config.DownloadDirectory, FileName);
         PackageRootDirectory =
-            Path.Combine(config.PackageWorkingDirectory, release.Version.ToString(), NormalizedName);
-        UnpackedDirectory =
-            Path.Combine(config.UnpackWorkingDirectory, release.Version.ToString(), NormalizedName);
+            Path.Combine(config.PackageWorkingDirectory, release.Product.ToString(), NormalizedName);
+        UnpackedBaseDirectory =
+            Path.Combine(config.UnpackWorkingDirectory, release.Product.ToString(), NormalizedName);
+        UnpackedDirectory = UnpackedBaseDirectory;
+
         if (Platform == Platform.Linux)
         {
             UnpackedDirectory += "/opt/firebird";
         }
+        else if (Platform == Platform.Osx)
+        {
+            UnpackedDirectory += "/Versions/A/Resources";
+        }
 
-        LicensesFileName = $"LICENSES{release.Version}.zip";
+        LicensesFileName = $"LICENSES{release.Product}.zip";
     }
 }

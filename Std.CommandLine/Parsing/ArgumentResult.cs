@@ -62,7 +62,7 @@ namespace Std.CommandLine.Parsing
                 return failedResult;
             }
 
-            if (!(argument is Argument arg))
+            if (argument is not Argument arg)
             {
                 return argument.Arity.MaximumNumberOfValues switch
                 {

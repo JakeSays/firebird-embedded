@@ -14,11 +14,9 @@ namespace Std.CommandLine.Binding
     internal class ModelDescriptor
     {
         private const BindingFlags CommonBindingFlags =
-            BindingFlags.IgnoreCase
-            | BindingFlags.Public
-            | BindingFlags.Instance;
+            BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
 
-        private static readonly ConcurrentDictionary<Type, ModelDescriptor> ModelDescriptors = new ConcurrentDictionary<Type, ModelDescriptor>();
+        private static readonly ConcurrentDictionary<Type, ModelDescriptor> ModelDescriptors = [];
 
         private List<PropertyDescriptor>? _propertyDescriptors;
         private List<ConstructorDescriptor>? _constructorDescriptors;

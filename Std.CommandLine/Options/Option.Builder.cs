@@ -56,6 +56,11 @@ namespace Std.CommandLine.Options
             return this;
         }
 
+        public OptionBuilder<TOpt> Parser(Func<string?, (TOpt Result, string? ParseError)> parser)
+        {
+            GetArg().SetParser(parser);
+            return this;
+        }
 
         public OptionBuilder<TOpt> DefaultValue(TOpt value)
         {

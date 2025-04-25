@@ -22,10 +22,9 @@ internal static class MetadataSerializer
                 Expected(RootEl, root);
                 return null;
             }
-
             var metadata = new PackageMetadata();
 
-            HashSet<FirebirdVersion> seenVersions = [];
+            HashSet<ProductId> seenVersions = [];
             foreach (var el in root.Elements())
             {
                 if (!ParseReleaseHistory(el, metadata, out var version))
@@ -33,7 +32,7 @@ internal static class MetadataSerializer
                     return null;
                 }
 
-                if (!seenVersions.Add((FirebirdVersion) version!))
+                if (!seenVersions.Add((ProductId) version!))
                 {
                     StdErr.RedLine($"Duplicate release history elements for version {version}.");
                 }
@@ -57,9 +56,10 @@ internal static class MetadataSerializer
         {
             var xml = new XElement(
                 RootEl,
-                SerializeReleaseHistory(metadata.V3Releases, FirebirdVersion.V3),
-                SerializeReleaseHistory(metadata.V4Releases, FirebirdVersion.V4),
-                SerializeReleaseHistory(metadata.V5Releases, FirebirdVersion.V5));
+                SerializeReleaseHistory(metadata.AssetManagerReleases),
+                SerializeReleaseHistory(metadata.V3Releases),
+                SerializeReleaseHistory(metadata.V4Releases),
+                SerializeReleaseHistory(metadata.V5Releases));
 
             xml.Save(path, SaveOptions.OmitDuplicateNamespaces);
             return true;
@@ -70,11 +70,19 @@ internal static class MetadataSerializer
             return false;
         }
 
-        static XElement SerializeReleaseHistory(IReadOnlyList<PackageRelease> releases, FirebirdVersion version)
+        static XElement SerializeReleaseHistory(PackageReleaseHistory history)
         {
             var element = new XElement(
                 ReleaseHistoryEl,
-                [new XAttribute(FirebirdVersionAttr, version), ..releases.Select(SerializeRelease)]);
+                [
+                    new XAttribute(ProductAttr, history.Product),
+                    new XAttribute(CurrentPackageVersionAttr, history.CurrentPackageVersion.ToString(VersionStyle.Nuget)),
+                    history.Product != ProductId.AssetManager
+                        ? new XAttribute(
+                            CurrentAssetVersionAttr, history.CurrentAssetVersion.ToString(VersionStyle.Firebird))
+                        : null,
+                    ..history.History.Select(SerializeRelease)
+                ]);
 
             return element;
 
@@ -84,10 +92,13 @@ internal static class MetadataSerializer
 
                 var el = new XElement(
                     ReleaseEl,
-                    new XAttribute(RidAttr, release.Rid),
+                    new XAttribute(RidAttr, release.Rid.PackageText),
                     new XAttribute(PackageVersionAttr, release.PackageVersion.ToString(VersionStyle.Nuget)),
-                    new XAttribute(NativeAssetsVersionAttr, release.FirebirdRelease),
                     new XAttribute(BuildDateAttr, release.BuildDate.ToString(dateFormat)));
+                if (release.FirebirdRelease)
+                {
+                    el.Add(new XAttribute(NativeAssetsVersionAttr, release.FirebirdRelease));
+                }
                 if (release.PublishDate != null)
                 {
                     el.Add(new XAttribute(PublishDateAttr, release.PublishDate.Value.ToString(dateFormat)));
@@ -97,23 +108,31 @@ internal static class MetadataSerializer
         }
     }
 
-    private static bool ParseReleaseHistory(XElement xml, PackageMetadata metadata, out FirebirdVersion? fbVersion)
+    private static bool ParseReleaseHistory(XElement xml, PackageMetadata metadata, out ProductId? product)
     {
-        fbVersion = null;
+        product = null;
+
         if (xml.Name != ReleaseHistoryEl)
         {
             Expected(ReleaseHistoryEl, xml);
             return false;
         }
 
-        fbVersion = xml.EnumAttr<FirebirdVersion>(FirebirdVersionAttr);
-        if (fbVersion is null)
+        product = xml.EnumAttr<ProductId>(ProductAttr);
+        if (product is null)
         {
-            IlFormed(xml, "Invalid or missing firebird version");
+            IlFormed(xml, "Invalid or missing product id");
             return false;
         }
 
-        foreach (var release in ParseReleases((FirebirdVersion) fbVersion, xml))
+        var pkgVersion = ParseVersion(xml, CurrentPackageVersionAttr, VersionStyle.Nuget);
+        var assetVersion = ParseVersion(xml, CurrentAssetVersionAttr, VersionStyle.Firebird);
+
+        var productHistory = metadata.GetProductHistory((ProductId)product);
+        productHistory.CurrentPackageVersion = pkgVersion ?? ReleaseVersion.Nil;
+        productHistory.CurrentAssetVersion = assetVersion ?? ReleaseVersion.Nil;
+
+        foreach (var release in ParseReleases((ProductId)product, xml))
         {
             if (release == null)
             {
@@ -126,7 +145,23 @@ internal static class MetadataSerializer
         return true;
     }
 
-    private static IEnumerable<PackageRelease?> ParseReleases(FirebirdVersion fbVersion, XElement xml)
+    private static ReleaseVersion? ParseVersion(XElement xml, XName attr, VersionStyle style)
+    {
+        var text = (string?) xml.Attribute(attr);
+        if (text == null)
+        {
+            return null;
+        }
+
+        if (!ReleaseVersion.TryParse(text, out var version, style))
+        {
+            return null;
+        }
+
+        return version;
+    }
+
+    private static IEnumerable<PackageRelease?> ParseReleases(ProductId product, XElement xml)
     {
         foreach (var releaseXml in xml.Elements())
         {
@@ -140,14 +175,9 @@ internal static class MetadataSerializer
             var buildDate = (DateTimeOffset?) releaseXml.Attribute(BuildDateAttr);
             if (buildDate is null)
             {
-                //try old attribute
-                buildDate = (DateTimeOffset?) releaseXml.Attribute(PackageReleaseDateAttr);
-                if (buildDate is null)
-                {
-                    IlFormed(xml, "Invalid or missing build date");
-                    yield return null;
-                    break;
-                }
+                IlFormed(xml, "Invalid or missing build date");
+                yield return null;
+                break;
             }
 
             var publishDate = (DateTimeOffset?) releaseXml.Attribute(PublishDateAttr);
@@ -166,19 +196,24 @@ internal static class MetadataSerializer
                 break;
             }
 
-            var nativeAssetsVersion = ParseReleaseVersion(releaseXml, NativeAssetsVersionAttr);
-            if (nativeAssetsVersion is null)
+            var nativeAssetsVersion = ReleaseVersion.Nil;
+            if (product != ProductId.AssetManager)
             {
-                yield return null;
-                break;
+                nativeAssetsVersion = ParseReleaseVersion(releaseXml, NativeAssetsVersionAttr) ?? ReleaseVersion.Nil;
+                if (!nativeAssetsVersion)
+                {
+                    yield return null;
+
+                    break;
+                }
             }
 
             var releaseInfo = new PackageRelease(
                 (Rid) rid,
                 (DateTimeOffset) buildDate,
-                fbVersion,
+                product,
                 (ReleaseVersion) packageVersion,
-                (ReleaseVersion) nativeAssetsVersion,
+                nativeAssetsVersion,
                 publishDate);
 
             yield return releaseInfo;
@@ -270,11 +305,12 @@ internal static class MetadataSerializer
     private static readonly XName ReleaseEl = "Release";
     private static readonly XName ReleaseHistoryEl = "ReleaseHistory";
 
-    private static readonly XName FirebirdVersionAttr = "FirebirdVersion";
+    private static readonly XName ProductAttr = "Product";
     private static readonly XName NativeAssetsVersionAttr = "NativeAssetsVersion";
     private static readonly XName BuildDateAttr = "BuildDate";
     private static readonly XName PublishDateAttr = "PublishDate";
-    private static readonly XName PackageReleaseDateAttr = "PackageReleaseDate";
     private static readonly XName PackageVersionAttr = "PackageVersion";
     private static readonly XName RidAttr = "Rid";
+    private static readonly XName CurrentAssetVersionAttr = "CurrentAssetVersion";
+    private static readonly XName CurrentPackageVersionAttr = "CurrentPackageVersion";
 }

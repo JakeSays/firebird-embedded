@@ -3,6 +3,7 @@
 
 
 using System;
+using System.Linq;
 using Std.CommandLine.Parsing;
 
 
@@ -55,6 +56,24 @@ namespace Std.CommandLine.Arguments
             SetDefaultValueFactory(() => getDefaultValue());
         }
 
+        public void SetParser(Func<string?, (TArg Result, string? Error)> parser)
+        {
+            ConvertArguments = (ArgumentResult argumentResult, out object? value) =>
+            {
+                var rawValue = argumentResult.Tokens.FirstOrDefault(t => t.Type == TokenType.Argument);
+                (var result, argumentResult.ErrorMessage) = parser(rawValue?.Value);
+
+                if (string.IsNullOrEmpty(argumentResult.ErrorMessage))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = default(TArg)!;
+                return false;
+            };
+        }
+
         public void SetParser(Func<ArgumentResult, TArg> parser)
         {
             ConvertArguments = (ArgumentResult argumentResult, out object? value) =>
@@ -95,7 +114,8 @@ namespace Std.CommandLine.Arguments
             SetParser(parser);
         }
 
-        public Argument(Func<ArgumentResult, TArg> parser, bool isDefault = false) : this(null, parser, isDefault)
+        public Argument(Func<ArgumentResult, TArg> parser, bool isDefault = false)
+            : this(null, parser, isDefault)
         {
         }
     }

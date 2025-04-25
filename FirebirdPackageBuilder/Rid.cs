@@ -3,13 +3,20 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Std.FirebirdEmbedded.Tools;
 
-internal record struct Rid(Platform Platform, Architecture Architecture = Architecture.All)
+internal struct Rid : IEquatable<Rid>
 {
-    public override string ToString() =>
-        Architecture != Architecture.All
-            ? ToStringFull()
-            : Platform.RidPrefix();
+    public override string ToString() => ToStringFull();
 
+    public static Rid All => new(Platform.All);
+
+    public Rid(Platform platform, Architecture architecture = Architecture.All)
+    {
+        Platform = platform;
+        Architecture = architecture;
+    }
+
+    public Platform Platform { get; }
+    public Architecture Architecture { get; }
     public string ToStringFull() => $"{Platform.RidPrefix()}-{Architecture.Name()}";
 
     [field: AllowNull, MaybeNull]
@@ -58,4 +65,14 @@ internal record struct Rid(Platform Platform, Architecture Architecture = Archit
                 return false;
         }
     }
+
+    public bool Equals(Rid other) => Platform == other.Platform && Architecture == other.Architecture;
+
+    public override bool Equals(object? obj) => obj is Rid other && Equals(other);
+
+    public override int GetHashCode() => HashCode.Combine((int)Platform, (int)Architecture);
+
+    public static bool operator ==(Rid left, Rid right) => left.Equals(right);
+
+    public static bool operator !=(Rid left, Rid right) => !left.Equals(right);
 }

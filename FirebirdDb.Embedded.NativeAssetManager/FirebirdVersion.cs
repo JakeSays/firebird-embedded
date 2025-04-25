@@ -1,19 +1,9 @@
 
 using System;
 
-#if FB_PACKAGE_BUILDER
-namespace Std.FirebirdEmbedded.Tools;
-#else
 namespace FirebirdSql.Embedded;
-#endif
 
-
-#if FB_PACKAGE_BUILDER
-internal
-#else
-public
-#endif
-enum FirebirdVersion
+public enum FirebirdVersion
 {
     V3,
     V4,

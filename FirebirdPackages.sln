@@ -8,6 +8,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FirebirdDb.Embedded.NativeA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Std.CommandLine", "Std.CommandLine\Std.CommandLine.csproj", "{5E5FDB3E-A1D5-498A-971B-41DF6F0C1008}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{000D6020-F5D7-4CC9-A539-36914452F00D}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		release-info.xml = release-info.xml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

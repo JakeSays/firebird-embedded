@@ -2,7 +2,7 @@ using Std.FirebirdEmbedded.Tools.Assets;
 using Std.FirebirdEmbedded.Tools.Support;
 
 
-namespace Std.FirebirdEmbedded.Tools;
+namespace Std.FirebirdEmbedded.Tools.Build;
 
 internal sealed class PackageStructureBuilder
 {
@@ -13,9 +13,9 @@ internal sealed class PackageStructureBuilder
     private readonly byte[] _iconBytes = ManifestResourceManager.ReadBinaryResource(IconFileName)
         ?? throw new InvalidOperationException("Icon file resource not found.");
 
-    private readonly Configuration _config;
+    private readonly BuildConfiguration _config;
 
-    public PackageStructureBuilder(Configuration config)
+    public PackageStructureBuilder(BuildConfiguration config)
     {
         _config = config;
         Directory.CreateDirectory(config.PackageWorkingDirectory);
@@ -23,20 +23,26 @@ internal sealed class PackageStructureBuilder
 
     public bool BuildStructures(FirebirdRelease release)
     {
-        if (LogConfig.IsNormal)
+        if (ConsoleConfig.IsNormal)
         {
             StdOut.NormalLine($"Building structures for release '{release.Name}'");
         }
 
         try
         {
+            CreateMetaPackageStructure(release);
+
             foreach (var asset in release.Assets)
             {
-                CreatePackageStructure(release.Version, asset);
+                CreatePackageStructure(release.Product, asset);
             }
 
             CreateConsolidatedPackageStructure(release.LinuxPackage);
             CreateConsolidatedPackageStructure(release.WindowsPackage);
+            if (release.Product == ProductId.V5)
+            {
+                CreateConsolidatedPackageStructure(release.MacOsPackage);
+            }
 
             if (!_config.TemplatesOnly)
             {
@@ -44,6 +50,14 @@ internal sealed class PackageStructureBuilder
                 CopyLicenses(release.WindowsPackage, release.WindowsPackage.NugetFiles, release.WindowsPackage.PackageRootDirectory);
                 CopyIcon(release.LinuxPackage.NugetFiles, release.LinuxPackage.PackageRootDirectory);
                 CopyIcon(release.WindowsPackage.NugetFiles, release.WindowsPackage.PackageRootDirectory);
+
+                if (release.Product == ProductId.V5)
+                {
+                    CopyLicenses(
+                        release.MacOsPackage, release.MacOsPackage.NugetFiles,
+                        release.MacOsPackage.PackageRootDirectory);
+                    CopyIcon(release.MacOsPackage.NugetFiles, release.MacOsPackage.PackageRootDirectory);
+                }
             }
 
             return true;
@@ -55,9 +69,27 @@ internal sealed class PackageStructureBuilder
         }
     }
 
+    private void CreateMetaPackageStructure(FirebirdRelease release)
+    {
+        if (ConsoleConfig.IsLoud)
+        {
+            StdOut.DarkBlueLine($"Building structure for meta package '{release.PackageId}'");
+        }
+
+        IoHelpers.RecreateDirectory(release.PackageRootDirectory);
+
+        if (_config.TemplatesOnly)
+        {
+            return;
+        }
+
+        CopyLicenses(release, release.NugetFiles, release.PackageRootDirectory);
+        CopyIcon(release.NugetFiles, release.PackageRootDirectory);
+    }
+
     private void CreateConsolidatedPackageStructure(ConsolidatedPackageDetails details)
     {
-        if (LogConfig.IsLoud)
+        if (ConsoleConfig.IsLoud)
         {
             StdOut.DarkBlueLine($"Building structure for consolidated package '{details.PackageId}'");
         }
@@ -65,9 +97,9 @@ internal sealed class PackageStructureBuilder
         IoHelpers.RecreateDirectory(details.PackageRootDirectory);
     }
 
-    private void CreatePackageStructure(FirebirdVersion version, FirebirdAsset asset)
+    private void CreatePackageStructure(ProductId version, FirebirdAsset asset)
     {
-        if (LogConfig.IsLoud)
+        if (ConsoleConfig.IsLoud)
         {
             StdOut.DarkBlueLine($"Building structure for package '{asset.PackageId}'");
         }
@@ -84,23 +116,26 @@ internal sealed class PackageStructureBuilder
 
         switch (version)
         {
-            case FirebirdVersion.V3 when asset.Platform == Platform.Linux:
+            case ProductId.V3 when asset.Platform == Platform.Linux:
                 CreateV3LinuxStructure(asset, asset.PackageRootDirectory);
                 break;
-            case FirebirdVersion.V3 when asset.Platform == Platform.Windows:
+            case ProductId.V3 when asset.Platform == Platform.Windows:
                 CreateV3WindowsStructure(asset, asset.PackageRootDirectory);
                 break;
-            case FirebirdVersion.V4 when asset.Platform == Platform.Linux:
+            case ProductId.V4 when asset.Platform == Platform.Linux:
                 CreateV4LinuxStructure(asset, asset.PackageRootDirectory);
                 break;
-            case FirebirdVersion.V4 when asset.Platform == Platform.Windows:
+            case ProductId.V4 when asset.Platform == Platform.Windows:
                 CreateV4WindowsStructure(asset, asset.PackageRootDirectory);
                 break;
-            case FirebirdVersion.V5 when asset.Platform == Platform.Linux:
+            case ProductId.V5 when asset.Platform == Platform.Linux:
                 CreateV5LinuxStructure(asset, asset.PackageRootDirectory);
                 break;
-            case FirebirdVersion.V5 when asset.Platform == Platform.Windows:
+            case ProductId.V5 when asset.Platform == Platform.Windows:
                 CreateV5WindowsStructure(asset, asset.PackageRootDirectory);
+                break;
+            case ProductId.V5 when asset.Platform == Platform.Osx:
+                CreateV5MacOsStructure(asset, asset.PackageRootDirectory);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(version), version, null);
@@ -109,7 +144,7 @@ internal sealed class PackageStructureBuilder
 
     private void CopyFile(FirebirdAsset asset, string fileName, string destRootDirectory)
     {
-        if (LogConfig.IsNaggy)
+        if (ConsoleConfig.IsNaggy)
         {
             StdOut.DarkGreenLine($"Copying file '{fileName}' to '{destRootDirectory}'");
         }
@@ -127,7 +162,7 @@ internal sealed class PackageStructureBuilder
     {
         var destPath = Path.Combine(destRootDirectory, details.LicensesFileName);
 
-        if (LogConfig.IsNaggy)
+        if (ConsoleConfig.IsNaggy)
         {
             StdOut.DarkGreenLine($"Writing Licenses file to '{destPath}'");
         }
@@ -140,7 +175,7 @@ internal sealed class PackageStructureBuilder
     {
         var destPath = Path.Combine(destRootDirectory, IconFileName);
 
-        if (LogConfig.IsNaggy)
+        if (ConsoleConfig.IsNaggy)
         {
             StdOut.DarkGreenLine($"Writing icon file to '{destPath}'");
         }
@@ -149,12 +184,16 @@ internal sealed class PackageStructureBuilder
         nugetFiles.Add(new NugetFile(NugetDestination.Content, IconFileName));
     }
 
-    private void CopyTzData(FirebirdAsset asset, string destRootDirectory)
+    private void CopyTzData(FirebirdAsset asset, string destRootDirectory, bool includeIds = false)
     {
         CopyFile(asset, "tzdata/metaZones.res", destRootDirectory);
         CopyFile(asset, "tzdata/timezoneTypes.res", destRootDirectory);
         CopyFile(asset, "tzdata/windowsZones.res", destRootDirectory);
         CopyFile(asset, "tzdata/zoneinfo64.res", destRootDirectory);
+        if (includeIds)
+        {
+            CopyFile(asset, "tzdata/ids.dat", destRootDirectory);
+        }
     }
 
     private void CreateV3LinuxStructure(FirebirdAsset asset, string destRootDirectory)
@@ -184,6 +223,20 @@ internal sealed class PackageStructureBuilder
         CopyTzData(asset, destRootDirectory);
     }
 
+    private void CreateV5MacOsStructure(FirebirdAsset asset, string destRootDirectory)
+    {
+        CopyFile(asset, "lib/libfbclient.dylib", destRootDirectory);
+        CopyFile(asset, "lib/libib_util.dylib", destRootDirectory);
+        CopyFile(asset, "lib/libicudata.71.1.dylib", destRootDirectory);
+        CopyFile(asset, "lib/libicui18n.71.1.dylib", destRootDirectory);
+        CopyFile(asset, "lib/libicuuc.71.1.dylib", destRootDirectory);
+        CopyFile(asset, "lib/libtomcrypt.dylib", destRootDirectory);
+        CopyFile(asset, "lib/libtommath.dylib", destRootDirectory);
+        CopyFile(asset, "plugins/libEngine13.dylib", destRootDirectory);
+
+        CopyTzData(asset, destRootDirectory, includeIds: true);
+    }
+
     private void CreateV3WindowsStructure(FirebirdAsset asset, string destRootDirectory)
     {
         CopyFile(asset, "fbclient.dll", destRootDirectory);
@@ -211,9 +264,7 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "zlib1.dll", destRootDirectory);
         CopyFile(asset, "plugins/engine13.dll", destRootDirectory);
 
-        CopyFile(asset, "tzdata/ids.dat", destRootDirectory);
-
-        CopyTzData(asset, destRootDirectory);
+        CopyTzData(asset, destRootDirectory, true);
     }
 
     private void CreateV5WindowsStructure(FirebirdAsset asset, string destRootDirectory)
@@ -235,8 +286,6 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "zlib1.dll", destRootDirectory);
         CopyFile(asset, "plugins/engine13.dll", destRootDirectory);
 
-        CopyFile(asset, "tzdata/ids.dat", destRootDirectory);
-
-        CopyTzData(asset, destRootDirectory);
+        CopyTzData(asset, destRootDirectory, true);
     }
 }

@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
 using Octokit;
+using Octokit.Internal;
+using Std.FirebirdEmbedded.Tools.Build;
 
 
 namespace Std.FirebirdEmbedded.Tools;
@@ -8,16 +10,16 @@ internal sealed partial class GithubReleaseManager : IDisposable
 {
     private HttpClient? _httpClient;
 
-    private readonly Configuration _config;
+    private readonly BuildConfiguration _config;
 
-    public GithubReleaseManager(Configuration config)
+    public GithubReleaseManager(BuildConfiguration config)
     {
         _config = config;
     }
 
     public FirebirdReleases GetLatestReleases()
     {
-        if (LogConfig.IsNormal)
+        if (ConsoleConfig.IsNormal)
         {
             StdOut.NormalLine("Downloading firebird release information from github.");
         }
@@ -32,7 +34,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
         var v5Latest = releases.First(r => r.TagName.StartsWith("v5.") && !r.Prerelease);
 
         var v3Release = new FirebirdRelease(
-            FirebirdVersion.V3,
+            ProductId.V3,
             v3Latest.TagName,
             v3Latest.Name,
             v3Latest.PublishedAt ?? v3Latest.CreatedAt,
@@ -46,7 +48,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
         v3Release.Initialize(_config);
 
         var v4Release = new FirebirdRelease(
-            FirebirdVersion.V4,
+            ProductId.V4,
             v4Latest.TagName,
             v4Latest.Name,
             v4Latest.PublishedAt ?? v4Latest.CreatedAt,
@@ -60,7 +62,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
         v4Release.Initialize(_config);
 
         var v5Release = new FirebirdRelease(
-            FirebirdVersion.V5,
+            ProductId.V5,
             v5Latest.TagName,
             v5Latest.Name,
             v5Latest.PublishedAt ?? v5Latest.CreatedAt,
@@ -77,7 +79,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
 
         void MakeV3V4Asset(ReleaseAsset source, FirebirdRelease release)
         {
-            var result = ParseFileName(release.Version, source);
+            var result = ParseFileName(release.Product, source);
             if (result == null)
             {
                 return;
@@ -105,7 +107,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
 
         void MakeV5Asset(ReleaseAsset source, FirebirdRelease release)
         {
-            var result = ParseFileName(release.Version, source);
+            var result = ParseFileName(release.Product, source);
             if (result == null)
             {
                 return;
@@ -143,9 +145,9 @@ internal sealed partial class GithubReleaseManager : IDisposable
 
     record ParseResult(ReleaseVersion Version, Architecture Arch, ContentType Type, Platform Platform);
 
-    static ParseResult? ParseFileName(FirebirdVersion fbVersion, ReleaseAsset asset)
+    static ParseResult? ParseFileName(ProductId fbVersion, ReleaseAsset asset)
     {
-        var match = fbVersion == FirebirdVersion.V5
+        var match = fbVersion == ProductId.V5
             ? V5NameParser.Match(asset.Name.ToLower())
             : BelowV5NameParser.Match(asset.Name.ToLower());
         if (!match.Success)
@@ -162,13 +164,14 @@ internal sealed partial class GithubReleaseManager : IDisposable
 
         Platform platform;
         Architecture arch;
-        if (fbVersion == FirebirdVersion.V5)
+        if (fbVersion == ProductId.V5)
         {
             platform = match.Groups["platform"].Value
                 switch
                 {
                     "windows" => Platform.Windows,
                     "linux" => Platform.Linux,
+                    "macos" => Platform.Osx,
                     _ => throw new ArgumentOutOfRangeException()
                 };
             arch = match.Groups["arch"].Value
@@ -199,6 +202,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
             {
                 "zip" => ContentType.Zip,
                 "tar.gz" => ContentType.Tarball,
+                "pkg" => ContentType.Xar,
                 _ => throw new ArgumentOutOfRangeException()
             };
 
@@ -209,7 +213,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
         RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex BelowV5NameParser { get; }
 
-    [GeneratedRegex(@"^Firebird\-(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)\.(?<build>\d+)\-(?<rev>\d+)\-(?<platform>linux|windows)\-(?<arch>x86|x64|arm32|arm64)\.(?<ext>zip|tar\.gz)$",
+    [GeneratedRegex(@"^Firebird\-(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)\.(?<build>\d+)\-(?<rev>\d+)\-(?<platform>linux|windows|macos)\-(?<arch>x86|x64|arm32|arm64)\.(?<ext>zip|tar\.gz|pkg)$",
         RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex V5NameParser { get; }
 
@@ -222,7 +226,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
 
     internal Task<DownloadResult[]> DownloadAssets(FirebirdRelease release)
     {
-        if (LogConfig.IsNormal)
+        if (ConsoleConfig.IsNormal)
         {
             StdOut.NormalLine("Downloading firebird assets.");
         }
@@ -242,7 +246,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
                 {
                     if (!_config.ForceDownload)
                     {
-                        if (LogConfig.IsNaggy)
+                        if (ConsoleConfig.IsNaggy)
                         {
                             StdOut.DarkGreenLine($"{asset.FileName} already exists, skipping download.");
                         }
@@ -251,7 +255,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
                     File.Delete(asset.LocalPath);
                 }
 
-                if (LogConfig.IsLoud)
+                if (ConsoleConfig.IsLoud)
                 {
                     StdOut.NormalLine($"Downloading asset {asset.Name}");
                 }
@@ -264,7 +268,7 @@ internal sealed partial class GithubReleaseManager : IDisposable
             }
             catch (Exception ex)
             {
-                if (!LogConfig.IsSilent)
+                if (!ConsoleConfig.IsSilent)
                 {
                     StdErr.RedLine($"Error downloading asset {asset.Name}, reason: {ex.Message}");
                 }
@@ -276,5 +280,42 @@ internal sealed partial class GithubReleaseManager : IDisposable
     public void Dispose()
     {
         _httpClient?.Dispose();
+    }
+}
+
+internal class OctokitStuff
+{
+    public static void Run()
+    {
+        try
+        {
+            var creds = new InMemoryCredentialStore(
+                new Credentials(
+                    ""));
+            var client = new GitHubClient(new ProductHeaderValue("FirebirdPackageBuilder"), creds);
+
+            var repo = client.Repository.Get("JakeSays", "testrepo").Result;
+            var branch = client.Repository.Branch.Get(repo.Id, repo.DefaultBranch).Result;
+
+            var commits = client.Repository.Commit.GetAll(repo.Id).Result;
+
+            var tree = client.Git.Tree.Get(repo.Id, repo.DefaultBranch).Result;
+            foreach (var item in tree.Tree)
+            {
+                Console.WriteLine($"item: {item.Type}, sha: {item.Sha}, path: {item.Path}");
+//                var sha = "2c68654407811a6631823e1de4d4b1f6af96e426";
+                if (item.Type == TreeType.Blob)
+                {
+                    // var commit = client.Git.Commit.Get(repo.Id, item.Sha)
+                    //     .Result;
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+
     }
 }

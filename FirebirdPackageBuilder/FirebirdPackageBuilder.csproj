@@ -9,9 +9,12 @@
         <AssemblyName>package-builder</AssemblyName>
         <RootNamespace>Std.FirebirdEmbedded.Tools</RootNamespace>
         <DefineConstants>$(DefineConstants);FB_PACKAGE_BUILDER</DefineConstants>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="LTRData.DiscUtils.Core" Version="1.0.53" />
+        <PackageReference Include="Nerdbank.Streams" Version="2.12.87" />
         <PackageReference Include="NuGet.Commands" Version="6.13.2" />
         <PackageReference Include="NuGet.Packaging" Version="6.13.2"/>
         <PackageReference Include="Octokit" Version="14.0.0"/>

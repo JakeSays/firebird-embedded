@@ -15,8 +15,11 @@
   foreach (var asset in Assets)
   {
       var ps = asset.PropertySuffix;
-      var pkgp = MakePath(asset, $"{asset.Rid.PackageText}/{Release.Version}/", false);
+      var pkgp = MakePath(asset, $"{asset.Rid.PackageText}/{Release.Product}/", false);
       var rvp = MakePath(asset, pkgp);
+      var osp = asset.Rid.Platform == Platform.Osx
+          ? "OSX"
+          : asset.Rid.Platform.ToString();
 #>
 
     <!-- ***** -->
@@ -28,7 +31,7 @@
             <FirebirdPlatform<#=ps#> Condition="'$(FirebirdPlatform<#=ps#>)' == ''">%(RuntimePack.RuntimeIdentifier)</FirebirdPlatform<#=ps#>>
             <FirebirdPlatform<#=ps#> Condition="'$(FirebirdPlatform<#=ps#>)' == ''">$(RuntimeIdentifier)</FirebirdPlatform<#=ps#>>
             <FirebirdPlatform<#=ps#> Condition="'$(FirebirdPlatform<#=ps#>)' == ''">$(RuntimeIdentifiers)</FirebirdPlatform<#=ps#>>
-            <FirebirdPlatform<#=ps#> Condition="'$(FirebirdPlatform<#=ps#>)' == '' AND $([MSBuild]::IsOSPlatform('<#= asset.Rid.Platform #>')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == '<#= asset.Rid.Architecture.MsBuildName() #>'"><#= asset.Rid.PackageText#></FirebirdPlatform<#=ps#>>
+            <FirebirdPlatform<#=ps#> Condition="'$(FirebirdPlatform<#=ps#>)' == '' AND $([MSBuild]::IsOSPlatform('<#= osp #>')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == '<#= asset.Rid.Architecture.MsBuildName() #>'"><#= asset.Rid.PackageText#></FirebirdPlatform<#=ps#>>
             <_DoCopy<#=ps#> Condition="('$(FirebirdPlatform<#=ps#>)' == '' or '$(FirebirdPlatform<#=ps#>)' == '<#= asset.Rid.PackageText #>') and '$(FirebirdPlatform<#=ps#>)' != 'none'">True</_DoCopy<#=ps#>>
         </PropertyGroup>
         <ItemGroup Condition="'$(FirebirdPlatform<#=ps#>)' == '<#= asset.Rid.PackageText#>'">
@@ -36,7 +39,7 @@
             <_FirebirdCopyItems<#=ps#> Include="$(MSBuildThisFileDirectory)..<#=Separator(asset)#>..<#=Separator(asset)#>.firebird<#=rvp#>**">
                 <FirebirdFolder<#=ps#>><#=FormatPath(asset, "firebird/")#><#=pkgp#></FirebirdFolder<#=ps#>>
             </_FirebirdCopyItems<#=ps#>>
-            <_FirebirdCopyItems<#=ps#> Include="$(MSBuildThisFileDirectory)..<#=Separator(asset)#>..<#=Separator(asset)#>LICENSES<#=Release.Version#>.zip">
+            <_FirebirdCopyItems<#=ps#> Include="$(MSBuildThisFileDirectory)..<#=Separator(asset)#>..<#=Separator(asset)#>LICENSES<#=Release.Product#>.zip">
                 <FirebirdFolder<#=ps#>><#=FormatPath(asset, "firebird/")#></FirebirdFolder<#=ps#>>
             </_FirebirdCopyItems<#=ps#>>
         </ItemGroup>

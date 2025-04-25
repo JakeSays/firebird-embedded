@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 // ReSharper disable InconsistentNaming
@@ -35,12 +36,16 @@ public static class FbNativeAssetManager
             {
                 return "fbclient.dll";
             }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return "lib/fbclient.dylib";
+            }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 return $"plugins/libEngine{version.NativeBinarySuffix()}.so";
             }
 
-            throw new PlatformNotSupportedException("Only Windows and Linux platforms are currently supported.");
+            throw new PlatformNotSupportedException("Unsupported OS.");
         }
     }
 
@@ -59,6 +64,16 @@ public static class FbNativeAssetManager
 
             var processPath = Path.GetDirectoryName(buffer.ToString());
             return processPath!;
+        }
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            var entryAssembly = Assembly.GetEntryAssembly();
+            if (entryAssembly == null)
+            {
+                throw new NotSupportedException("Entry assembly not available.");
+            }
+            return Path.GetDirectoryName(entryAssembly.Location)!;
         }
 
         var linuxProcessPath = Path.GetDirectoryName(readlink("/proc/self/exe")!)!;
@@ -87,13 +102,33 @@ public static class FbNativeAssetManager
 
         var basePath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? GetWindowsPath(intermediateDir)
-            : GetLinuxPath(intermediateDir);
+            : RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                ? GetLinuxPath(intermediateDir)
+                : GetMacosPath(intermediateDir);
 
         return basePath;
 
+        static string GetMacosPath(string intermediateDir)
+        {
+            var arch = RuntimeInformation.OSArchitecture == Architecture.X64
+                ? "x64"
+                : "arm64";
+            var rid = $"macos-{arch}";
+            return Path.Combine(intermediateDir, rid);
+        }
+
         static string GetLinuxPath(string intermediateDir)
         {
-            var rid = $"linux-{(Environment.Is64BitProcess ? "x64" : "x32")}";
+            var arch = RuntimeInformation.OSArchitecture
+                switch
+                {
+                    Architecture.X86 => "x32",
+                    Architecture.X64 => "x64",
+                    Architecture.Arm => "arm32",
+                    Architecture.Arm64 => "arm64",
+                    _ => throw new PlatformNotSupportedException("Unsupported architecture.")
+                };
+            var rid = $"linux-{arch}";
             return Path.Combine(intermediateDir, rid);
         }
 

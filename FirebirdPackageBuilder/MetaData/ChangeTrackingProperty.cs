@@ -1,17 +1,17 @@
 namespace Std.FirebirdEmbedded.Tools.MetaData;
 
-internal sealed class NullableChangeTrackingProperty<TValue>
-    where TValue : struct, IEquatable<TValue>
+internal sealed class ChangeTrackingProperty<TValue>
+    where TValue : IEquatable<TValue>
 {
     private readonly Action? _notifier;
 
-    public NullableChangeTrackingProperty(Action notifier, TValue? initialValue = null)
+    public ChangeTrackingProperty(Action notifier, TValue initialValue)
     {
         Value = initialValue;
         _notifier = notifier;
     }
 
-    public TValue? Value
+    public TValue Value
     {
         get;
         set
@@ -23,19 +23,19 @@ internal sealed class NullableChangeTrackingProperty<TValue>
             }
 
             //either both are null or both are not null
-            if (!(field == null ^
-                value == null))
+            if (!(field == null! ^
+                value == null!))
             {
                 //either both are null or their values are equal
                 if (field == null ||
-                    field.Value.Equals(value!.Value))
+                    field.Equals(value))
                 {
                     return;
                 }
             }
 
             //one or the other is null or different
-            field = value;
+            field = value!;
             _notifier();
         }
     }

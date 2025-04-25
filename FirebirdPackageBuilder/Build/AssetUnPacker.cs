@@ -1,15 +1,18 @@
 using System.Formats.Tar;
 using System.IO.Compression;
+using Std.FirebirdEmbedded.Tools.Build.Osx;
 using Std.FirebirdEmbedded.Tools.Support;
 
 
-namespace Std.FirebirdEmbedded.Tools;
+namespace Std.FirebirdEmbedded.Tools.Build;
 
 internal sealed class AssetUnPacker
 {
+    private readonly PkgUnpacker _pkgUnpacker = new ();
+
     public bool UnpackRelease(FirebirdRelease release)
     {
-        if (LogConfig.IsNormal)
+        if (ConsoleConfig.IsNormal)
         {
             StdOut.NormalLine($"Unpacking release {release.Name}");
         }
@@ -27,7 +30,7 @@ internal sealed class AssetUnPacker
 
     private bool UnpackAsset(FirebirdAsset asset)
     {
-        if (LogConfig.IsNormal)
+        if (ConsoleConfig.IsNormal)
         {
             StdOut.NormalLine($"Unpacking asset '{asset.Name}'");
         }
@@ -36,14 +39,21 @@ internal sealed class AssetUnPacker
         {
             IoHelpers.RecreateDirectory(asset.UnpackedDirectory);
 
-            if (asset.ContentType == ContentType.Tarball)
+            switch (asset.ContentType)
             {
-                UnpackTarball();
+                case ContentType.Tarball:
+                    UnpackTarball();
+                    break;
+                case ContentType.Zip:
+                    UnpackZipArchive(asset.UnpackedDirectory);
+                    break;
+                case ContentType.Xar:
+                    UnpackPkg();
+                    break;
+                default:
+                    return false;
             }
-            else
-            {
-                UnpackZipArchive(asset.UnpackedDirectory);
-            }
+
             return true;
         }
         catch (Exception ex)
@@ -57,14 +67,12 @@ internal sealed class AssetUnPacker
         {
             const string buildRootTarball = "buildroot.tar.gz";
 
-            if (LogConfig.IsLoud)
+            if (ConsoleConfig.IsLoud)
             {
                 StdOut.DarkBlueLine($"Unpacking: '{asset.LocalPath}'.");
             }
 
-            //need to strip off the opt/firebird before unpacking
-            var unpackDirectory = Path.GetDirectoryName(asset.UnpackedDirectory)!;
-            unpackDirectory = Path.GetDirectoryName(unpackDirectory)!;
+            var unpackDirectory = asset.UnpackedBaseDirectory;
 
             var symbolicLinks = new List<(string Link, string Target)>();
 
@@ -94,10 +102,11 @@ internal sealed class AssetUnPacker
             Func<string, bool>? fileFilter = null,
             List<(string Link, string Target)>? symbolicLinks = null)
         {
-            if (LogConfig.IsLoud)
+            if (ConsoleConfig.IsLoud)
             {
                 StdOut.DarkBlueLine($"un-taring '{tarballPath}'");
             }
+
             using var source = File.OpenRead(tarballPath);
             using var reader = new TarReader(source, true);
 
@@ -108,7 +117,7 @@ internal sealed class AssetUnPacker
                 {
                     if (entry.EntryType == TarEntryType.HardLink)
                     {
-                        if (LogConfig.IsLoud)
+                        if (ConsoleConfig.IsLoud)
                         {
                             StdOut.YellowLine($"Encountered a hard link: {entry.Name}, ignoring.");
                         }
@@ -118,7 +127,7 @@ internal sealed class AssetUnPacker
                     {
                         if (entry.Name.StartsWith("./opt"))
                         {
-                            if (LogConfig.IsLoud)
+                            if (ConsoleConfig.IsLoud)
                             {
                                 StdOut.DarkBlueLine($"Symbolic link: '{entry.Name}'.");
                             }
@@ -151,7 +160,7 @@ internal sealed class AssetUnPacker
 
         string DecompressTarball(string sourcePath, string unpackDirectory)
         {
-            if (LogConfig.IsLoud)
+            if (ConsoleConfig.IsLoud)
             {
                 StdOut.DarkBlueLine($"decompressing '{sourcePath}'");
             }
@@ -167,9 +176,19 @@ internal sealed class AssetUnPacker
             return destPath;
         }
 
+        void UnpackPkg()
+        {
+            if (ConsoleConfig.IsLoud)
+            {
+                StdOut.DarkBlueLine($"Unpacking: '{asset.LocalPath}'.");
+            }
+
+            _pkgUnpacker.Unpack(asset.LocalPath, asset.UnpackedBaseDirectory);
+        }
+
         void UnpackZipArchive(string unpackDirectory)
         {
-            if (LogConfig.IsLoud)
+            if (ConsoleConfig.IsLoud)
             {
                 StdOut.DarkBlueLine($"un-zipping '{asset.LocalPath}'");
             }

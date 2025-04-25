@@ -1,20 +1,16 @@
 ﻿using System.Reflection;
+using NuGet.Configuration;
 using NuGet.Versioning;
 using Std.CommandLine;
-using Std.FirebirdEmbedded.Tools.MetaData;
+using Std.FirebirdEmbedded.Tools.Build;
+using Std.FirebirdEmbedded.Tools.Build.Osx;
 using Std.FirebirdEmbedded.Tools.Publish;
 using Std.FirebirdEmbedded.Tools.Support;
 
+// ReSharper disable UnusedAutoPropertyAccessor.Local
+
 
 namespace Std.FirebirdEmbedded.Tools;
-
-internal enum Verbosity
-{
-    Silent,
-    Normal,
-    Loud,
-    Nagging
-}
 
 internal static class Program
 {
@@ -30,47 +26,57 @@ internal static class Program
         return result;
     }
 
-    private class BuildArgs
+    private class CommonArgs
     {
-        public List<FirebirdVersion> Versions { get; set; } = [];
         public Verbosity Verbosity { get; set; }
-        public string WorkDir { get; set; } = null!;
+        public string? RepositoryRoot { get; set; }
+        public string MetadataFile { get; set; } = null!;
+    }
+
+    private class BuildArgs : CommonArgs
+    {
+        public List<ProductId> Versions { get; set; } = [];
+        public string? WorkDir { get; set; } = null!;
         public string? PackageDir { get; set; }
         public string? PackagePrefix { get; set; }
         public bool ForceDownload { get; set; }
-        public string MetadataFile { get; set; } = null!;
         public BuildType Type { get; set; }
-        public string? AssetManagerVersion { get; set; }
-        public string InitialPackageVersion { get; set; } = null!;
+        public bool ForceBuildAssetManager { get; set; }
+        public ReleaseVersion AssetManagerVersion { get; set; } = ReleaseVersion.Nil;
+        public ReleaseVersion TargetPackageVersion { get; set; }
         public bool TemplatesOnly { get; set; }
     }
 
-    private class PublishArgs
+    private class PublishArgs : CommonArgs
     {
-        public Verbosity Verbosity { get; set; }
         public string? PackageDir { get; set; }
         public string NugetApiKey { get; set; } = null!;
         public string? SourceType { get; set; }
         public string? LocalPackageDir { get; set; }
         public int TimeoutInSeconds { get; set; }
-        public string MetadataFile { get; set; } = null!;
-        public string? PackageVersion { get; set; }
+        public ReleaseVersion PackageVersion { get; set; }
         public bool ForcePublish { get; set; }
     }
 
     public static void Main(string[] args)
     {
-        var app = new StdApplication(args.ToList(), "Firebird Embedded Tools");
+        var app = new StdApplication(args.ToList(), "package-builder");
 
         app.CommandLine
             .WithExitOnParseError()
             .WithHelp()
             .WithVersion(Assembly.GetExecutingAssembly())
-            .Option<Verbosity>(o => o
+            .GlobalOption<Verbosity>(o => o
                 .Name("Verbosity")
                 .Alias("-v|--verbose")
                 .Description($"Verbosity Level. Options are [{Join<Verbosity>()}]")
                 .DefaultValue(Verbosity.Normal)
+            )
+            .GlobalOption<string>(o => o
+                .Alias("-r|--repo-root")
+                .Name("RepositoryRoot")
+                .Singleton()
+                .Description("Repository root directory. Used to resolve relative paths.")
             )
             .Command(c => c
                 .Name("build")
@@ -78,9 +84,8 @@ internal static class Program
                 .Option<string>(o => o
                     .Alias("-w|--workdir")
                     .Name("WorkDir")
-                    .Required()
                     .Singleton()
-                    .Description("Root directory for temporary work")
+                    .Description("Root directory for temporary work. Defaults to <repo root>/workspace")
                 )
                 .Option<string?>(o => o
                     .Alias("-p|--packagedir")
@@ -97,9 +102,8 @@ internal static class Program
                 .Option<string>(o => o
                     .Alias("-m|--metadata")
                     .Name("MetadataFile")
-                    .Required()
                     .Singleton()
-                    .Description("Path to the metadata file")
+                    .Description("Path to the metadata file. Defaults to <repo root>/version-info.xml")
                 )
                 .Option<BuildType>(o => o
                     .Alias("-t|--type")
@@ -108,29 +112,34 @@ internal static class Program
                     .DefaultValue(BuildType.Normal)
                     .Description($"Build type. Default is Normal. Options are [{Join<BuildType>()}]")
                 )
-                .Option<List<FirebirdVersion>>(o => o
+                .Option<List<ProductId>>(o => o
                     .Alias("--fbver")
                     .Name("Versions")
-                    .Description("Select a firebird version to build. Can be specified multiple times. Default is to build all version.")
+                    .Description("Select a firebird product version to build. Can be specified multiple times. Default is to build all versions.")
                 )
-                .Option<string>(o => o
+                .Option<ReleaseVersion>(o => o
                     .Alias("--amver")
                     .Name("AssetManagerVersion")
                     .Singleton()
-                    .Required()
-                    .Description("Minimum asset manager version.")
+                    .Parser(rawValue => ParseReleaseVersion(rawValue, "--amver"))
+                    .Description("Asset manager version. Required on first build unless --pkgver is used.")
                 )
                 .Flag(f => f
-                    .Alias("--forcedownload")
+                    .Alias("--force-build-am")
+                    .Name("ForceBuildAssetManager")
+                    .Description("Force build asset manager if no packages are built.")
+                )
+                .Flag(f => f
+                    .Alias("--force-download")
                     .Name("ForceDownload")
                     .Description("Force download of assets from github.")
                 )
-                .Option<string>(o => o
-                    .Alias("--initver")
-                    .Name("InitialPackageVersion")
-                    .DefaultValue("1.0.1")
+                .Option<ReleaseVersion>(o => o
+                    .Alias("--pkgver")
+                    .Name("TargetPackageVersion")
                     .Singleton()
-                    .Description("Initial package version. Defaults to 1.0.1")
+                    .Parser(rawValue => ParseReleaseVersion(rawValue, "--pkgver"))
+                    .Description("Target package package version. Can be used to force everything to build at a specific version.")
                 )
                 .Flag(f => f
                     .Alias("--to")
@@ -143,25 +152,24 @@ internal static class Program
             .Command(c => c
                 .Name("publish")
                 .Description("publish native asset packages")
-                .Option<string>(o => o
+                .Option<string?>(o => o
                     .Alias("-p|--packagedir")
                     .Name("PackageDir")
-                    .Required()
                     .Singleton()
-                    .Description("Directory for packages")
+                    .Description("Directory for packages. Defaults to <repo root>/workspace/output")
                 )
-                .Option<string?>(o => o
+                .Option<ReleaseVersion?>(o => o
                     .Alias("--pkgver")
                     .Name("PackageVersion")
                     .Singleton()
+                    .Parser(rawValue => ParseReleaseVersion(rawValue, "Package version"))
                     .Description("Specific package version to publish")
                 )
-                .Option<string>(o => o
+                .Option<string?>(o => o
                     .Alias("-m|--metadata")
                     .Name("MetadataFile")
-                    .Required()
                     .Singleton()
-                    .Description("Path to the metadata file")
+                    .Description("Path to the metadata file. Defaults to <repo root>/version-info.xml")
                 )
                 .Option<string>(o => o
                     .Alias("-k|--apikey")
@@ -175,7 +183,7 @@ internal static class Program
                     .Name("SourceType")
                     .Singleton()
                     .DefaultValue("test")
-                    .Description("Package source. Options are 'prod, staging, local, test' Defaults to 'test'")
+                    .Description("Package source. Options are 'prod, staging, local, test'")
                 )
                 .Flag(f => f
                     .Alias("--force")
@@ -199,76 +207,53 @@ internal static class Program
             )
             .Build();
         app.Run();
+
+        static (ReleaseVersion Result, string? Error) ParseReleaseVersion(string? input, string valueName)
+        {
+            if (!ReleaseVersion.TryParse(input, out var result, VersionStyle.Nuget))
+            {
+                return (ReleaseVersion.Nil, $"Could not parse {valueName}");
+            }
+
+            return (result, null);
+        }
     }
 
     private static int BuildPackages(BuildArgs args)
     {
-        if (!NuGetVersion.TryParse(args.AssetManagerVersion, out var minAssetManagerVersion))
+        ConsoleConfig.Initialize(args.Verbosity);
+
+        if (args.WorkDir != null)
         {
-            StdErr.RedLine($"Invalid asset manager version: {args.AssetManagerVersion}");
-            return IStdApplication.ExitCodeFailure;
+            args.PackageDir ??= Path.Combine(args.WorkDir, "output");
         }
 
-        var maxAssetManagerVersion = new NuGetVersion(minAssetManagerVersion.Major + 1, 0, 0);
-
-        var assetManagerVersion = new VersionRange(
-            minAssetManagerVersion,
-            includeMinVersion: true,
-            maxVersion: maxAssetManagerVersion,
-            includeMaxVersion: false);
-
-        if (!ReleaseVersion.TryParse(args.InitialPackageVersion, out var initialPackageVersion, VersionStyle.Nuget))
-        {
-            StdErr.RedLine($"Invalid package version: {args.InitialPackageVersion}");
-            return IStdApplication.ExitCodeFailure;
-        }
-
-        args.PackageDir ??= Path.Combine(args.WorkDir, "output");
-        Configuration.Initialize(
+        var config = new BuildConfiguration(
+            args.RepositoryRoot,
             args.PackagePrefix,
-            args.Verbosity,
             args.WorkDir,
             args.PackageDir,
             args.MetadataFile,
             args.Versions,
             args.ForceDownload,
             args.Type,
-            assetManagerVersion,
-            (ReleaseVersion) initialPackageVersion!);
-        Configuration.Instance.TemplatesOnly = args.TemplatesOnly;
+            args.AssetManagerVersion,
+            args.TargetPackageVersion,
+            args.ForceBuildAssetManager);
 
-        var metadata = MetadataSerializer.Load(Configuration.Instance.MetadataFilePath);
-        if (metadata == null)
-        {
-            return IStdApplication.ExitCodeFailure;
-        }
+        var builder = new BuildManager(config);
+        var result = builder.Run(args.TemplatesOnly);
 
-        var result = ReleaseBuilder.Build(Configuration.Instance, metadata);
-        if (result && metadata.Changed)
-        {
-            MetadataSerializer.Save(metadata, Configuration.Instance.MetadataFilePath);
-        }
-
-        return result
+        return result.Success
             ? IStdApplication.ExitCodeSuccess
             : IStdApplication.ExitCodeFailure;
     }
 
     private static int PublishPackages(PublishArgs pargs)
     {
-        LogConfig.Initialize(pargs.Verbosity);
-        var metadata = MetadataSerializer.Load(pargs.MetadataFile);
-        if (metadata == null)
-        {
-            return IStdApplication.ExitCodeFailure;
-        }
+        ConsoleConfig.Initialize(pargs.Verbosity);
 
-        var result = PublishCommon(pargs, metadata);
-        if (result != PublishStatus.Failed &&
-            metadata.Changed)
-        {
-            MetadataSerializer.Save(metadata, pargs.MetadataFile);
-        }
+        var result = PublishCommon(pargs);
 
         return result switch
         {
@@ -279,7 +264,7 @@ internal static class Program
         };
     }
 
-    private static PublishStatus PublishCommon(PublishArgs args, PackageMetadata metadata)
+    private static PublishStatus PublishCommon(PublishArgs args)
     {
         if (!Directory.Exists(args.PackageDir))
         {
@@ -287,15 +272,13 @@ internal static class Program
             return PublishStatus.Failed;
         }
 
-        var filter = args.PackageVersion != null
-            ? $"*.{args.PackageVersion}.nupkg"
-            : "*.nupkg";
+        var filter = $"*.{args.PackageVersion.ToString(VersionStyle.Nuget)}.nupkg";
         var packagePaths = Directory.GetFiles(args.PackageDir, filter, SearchOption.TopDirectoryOnly)
             .ToList();
 
         if (packagePaths.Count == 0)
         {
-            if (LogConfig.IsNormal)
+            if (ConsoleConfig.IsNormal)
             {
                 StdErr.YellowLine("No packages found, nothing to publish.");
             }
@@ -336,22 +319,52 @@ internal static class Program
 
         try
         {
-            var pusher = new PackagePublisher((NugetSource) source, args.LocalPackageDir);
-            var status = pusher.Publish(
-                metadata,
-                packagePaths,
+            var config = new PublishConfiguration(
                 args.NugetApiKey,
+                (NugetSource) source,
                 args.TimeoutInSeconds,
-                true,
-                args.ForcePublish);
+                args.PackageVersion,
+                args.RepositoryRoot,
+                args.PackageDir,
+                args.MetadataFile,
+                args.ForcePublish,
+                args.LocalPackageDir);
 
-            return status;
+            var pusher = new PackagePublisher(config);
+            var result = pusher.Run(packagePaths);
+
+            return result.Status;
         }
         catch (Exception ex)
         {
             StdErr.RedLine($"Error publishing: {ex.Message}");
             return PublishStatus.Failed;
         }
+    }
+
+    private static void TestXar()
+    {
+        var pkgUnpacker = new PkgUnpacker();
+        pkgUnpacker.Unpack("/p/firebird/Firebird-5.0.2.1613-0-macos-arm64.pkg", "/p/firebird/test-output");
+
+        //
+        // if (!XarApiInitializer.Initialize("/p/firebird/xar/out/debug"))
+        // {
+        //     StdErr.RedLine("Cannot initialize xar");
+        // }
+        //
+        // using var reader = new XarReader();
+        // if (!reader.Open("/p/firebird/Firebird-5.0.2.1613-0-macos-arm64.pkg"))
+        // {
+        //     StdErr.RedLine("Open failed");
+        // }
+        //
+        // foreach (var entry in reader.GetEntries())
+        // {
+        //     StdErr.NormalLine($"{entry.Type}: {entry.Path} ({entry.Size})");
+        // }
+        //
+        // var result = reader.Extract("/p/firebird/xartest");
     }
 }
 

@@ -1,71 +1,52 @@
+using Std.FirebirdEmbedded.Tools.Build;
+
+
 namespace Std.FirebirdEmbedded.Tools;
 
-internal class ConsolidatedPackageDetails : IPackageDetails
-{
-    public Rid Rid { get; }
-
-    public FirebirdRelease Release { get; }
-    public Architecture[] Architectures { get; private set; } = null!;
-    public Platform Platform { get; }
-    public string PackageRootDirectory { get; private set; } = null!;
-    public List<NugetFile> NugetFiles { get; } = [];
-
-    public string PackageId { get; private set; } = null!;
-    public string LicensesFileName { get; }
-
-    public ConsolidatedPackageDetails(FirebirdRelease release, Platform platform)
-    {
-        Rid = new Rid(platform);
-        Release = release;
-        Platform = platform;
-        LicensesFileName = $"LICENSES{release.Version}.zip";
-    }
-
-    public void Initialize(Configuration config)
-    {
-        PackageId = $"{config.DefaultPackagePrefix}.Embedded.{Release.Version}.NativeAssets.{Rid.DisplayName}";
-        if (config.PackagePrefix != null)
-        {
-            PackageId = $"{config.PackagePrefix}.{PackageId}";
-        }
-
-        PackageRootDirectory =
-            Path.Combine(config.PackageWorkingDirectory, Release.Version.ToString(), $"Firebird-{Release.ReleaseVersion}-{Rid.ToStringFull()}");
-
-        Architectures = Release.Assets
-            .Where(a => a.Rid.Platform == Platform)
-            .Select(a => a.Rid.Architecture)
-            .Order()
-            .ToArray();
-    }
-}
-
-internal class FirebirdRelease
+internal class FirebirdRelease : IPackageDetails
 {
     private readonly List<FirebirdAsset> _assets = [];
 
-    public FirebirdRelease(FirebirdVersion version,
+    public FirebirdRelease(ProductId product,
         string tag,
         string name,
         DateTimeOffset publishDate,
         string releaseNotes)
     {
-        Version = version;
+        Product = product;
         Tag = tag;
         Name = name;
         PublishDate = publishDate;
         ReleaseNotes = releaseNotes;
         LinuxPackage = new ConsolidatedPackageDetails(this, Platform.Linux);
         WindowsPackage = new ConsolidatedPackageDetails(this, Platform.Windows);
+        MacOsPackage = new ConsolidatedPackageDetails(this, Platform.Osx);
     }
 
-    public void Initialize(Configuration config)
+    public void Initialize(BuildConfiguration config)
     {
+        PackageId = $"{config.DefaultPackagePrefix}.Embedded.{Release.Product}.NativeAssets";
+        if (config.PackagePrefix != null)
+        {
+            PackageId = $"{config.PackagePrefix}.{PackageId}";
+        }
+
+        PackageRootDirectory =
+            Path.Combine(config.PackageWorkingDirectory, Release.Product.ToString(), $"Firebird-{Release.ReleaseVersion}-{Rid.ToStringFull()}");
+
         LinuxPackage.Initialize(config);
         WindowsPackage.Initialize(config);
+        MacOsPackage.Initialize(config);
     }
 
-    public FirebirdVersion Version { get; }
+    public Rid Rid => new (Platform.All);
+    public string PackageId { get; private set; } = "";
+    public string PackageRootDirectory { get; private set; } = "";
+    public FirebirdRelease Release => this;
+    public string LicensesFileName => $"LICENSES{Product}.zip";
+    public Architecture[] Architectures => [Architecture.All];
+
+    public ProductId Product { get; }
     public string Tag { get; }
     public string Name { get; }
     public DateTimeOffset PublishDate { get; }
@@ -75,19 +56,23 @@ internal class FirebirdRelease
 
     public IReadOnlyList<FirebirdAsset> Assets => _assets;
 
+    public List<NugetFile> NugetFiles { get; } = [];
+
     public ConsolidatedPackageDetails LinuxPackage { get; }
     public ConsolidatedPackageDetails WindowsPackage { get; }
+    public ConsolidatedPackageDetails MacOsPackage { get; }
     public void AddAsset(FirebirdAsset asset)
     {
         _assets.Add(asset);
     }
 
     public string VersionLong =>
-        Version switch
+        Product switch
         {
-            FirebirdVersion.V3 => "version 3",
-            FirebirdVersion.V4 => "version 4",
-            FirebirdVersion.V5 => "version 5",
+            ProductId.V3 => "version 3",
+            ProductId.V4 => "version 4",
+            ProductId.V5 => "version 5",
+            ProductId.AssetManager => throw new NotSupportedException(),
             _ => throw new ArgumentOutOfRangeException()
         };
 }

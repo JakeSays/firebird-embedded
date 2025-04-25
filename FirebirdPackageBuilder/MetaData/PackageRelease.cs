@@ -19,7 +19,7 @@ internal sealed class PackageRelease
         set => _publishDate.Value = value;
     }
 
-    public FirebirdVersion FbVersion { get; }
+    public ProductId Product { get; }
     public ReleaseVersion PackageVersion { get; }
     public ReleaseVersion FirebirdRelease { get; }
 
@@ -28,15 +28,15 @@ internal sealed class PackageRelease
     public PackageRelease(
         Rid rid,
         DateTimeOffset buildDate,
-        FirebirdVersion fbVersion,
+        ProductId product,
         ReleaseVersion packageVersion,
-        ReleaseVersion firebirdRelease,
+        ReleaseVersion? firebirdRelease,
         DateTimeOffset? publishDate = null)
     {
         Rid = rid;
-        FbVersion = fbVersion;
+        Product = product;
         PackageVersion = packageVersion;
-        FirebirdRelease = firebirdRelease;
+        FirebirdRelease = firebirdRelease ?? ReleaseVersion.Nil;
         _buildDate = new ChangeTrackingProperty<DateTimeOffset>(NotifyChange, buildDate);
         _publishDate = new NullableChangeTrackingProperty<DateTimeOffset>(NotifyChange, publishDate);
 
@@ -54,18 +54,18 @@ internal sealed class PackageRelease
     public static PackageRelease Initial(
         Rid rid,
         DateTimeOffset releaseDate,
-        FirebirdVersion fbVersion,
-        ReleaseVersion firebirdRelease,
+        ProductId fbVersion,
+        ReleaseVersion? firebirdRelease,
         ReleaseVersion initialVersion) =>
-    new (rid, releaseDate, fbVersion, initialVersion, firebirdRelease);
+    new (rid, releaseDate, fbVersion, initialVersion, firebirdRelease ?? ReleaseVersion.Nil);
 
     public PackageRelease WithBuildDate(DateTimeOffset releaseDate) =>
-        new (Rid, releaseDate, FbVersion, PackageVersion, FirebirdRelease);
+        new (Rid, releaseDate, Product, PackageVersion, FirebirdRelease);
 
     public PackageRelease NextPatchVersion(DateTimeOffset releaseDate) =>
-        new (Rid, releaseDate, FbVersion, PackageVersion.NextPatchVersion(), FirebirdRelease);
+        new (Rid, releaseDate, Product, PackageVersion.NextPatchVersion(), FirebirdRelease);
 
     public PackageRelease NextProductVersion(ReleaseVersion productVersion, DateTimeOffset releaseDate) =>
-        new (Rid, releaseDate, FbVersion, PackageVersion.NextPatchVersion(), productVersion);
+        new (Rid, releaseDate, Product, PackageVersion.NextMajorVersion(), productVersion);
 
 }

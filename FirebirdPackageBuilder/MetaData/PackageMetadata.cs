@@ -2,70 +2,65 @@ namespace Std.FirebirdEmbedded.Tools.MetaData;
 
 internal sealed class PackageMetadata
 {
-    private readonly List<PackageRelease> _v3Releases = [];
-    private readonly List<PackageRelease> _v4Releases = [];
-    private readonly List<PackageRelease> _v5Releases = [];
+    public const string MetadataFileName = "release-info.xml";
 
-    public IReadOnlyList<PackageRelease> V3Releases => _v3Releases;
-
-    public IReadOnlyList<PackageRelease> V4Releases => _v4Releases;
-
-    public IReadOnlyList<PackageRelease> V5Releases => _v5Releases;
+    public PackageReleaseHistory AssetManagerReleases { get; }
+    public PackageReleaseHistory V3Releases { get; }
+    public PackageReleaseHistory V4Releases { get; }
+    public PackageReleaseHistory V5Releases { get; }
 
     public bool Changed { get; set; }
 
-    public PackageRelease? GetLatestRelease(FirebirdVersion version, Rid? rid = null)
+    public PackageMetadata()
     {
-        var productReleases = PackageGroup(version);
+        AssetManagerReleases = new PackageReleaseHistory(this, ProductId.AssetManager);
+        V3Releases = new PackageReleaseHistory(this, ProductId.V3);
+        V4Releases = new PackageReleaseHistory(this, ProductId.V4);
+        V5Releases = new PackageReleaseHistory(this, ProductId.V5);
+    }
 
-        var latest = productReleases.Where(r => rid is null || r.Rid == rid)
+    public PackageRelease? GetLatestRelease(ProductId version, Rid? rid = null)
+    {
+        var productReleases = GetProductHistory(version);
+
+        var latest = productReleases.History.Where(r => rid is null || r.Rid == rid)
             .OrderByDescending(r => r.FirebirdRelease)
             .ThenByDescending(r => r.PackageVersion)
+            .ThenByDescending(r => r.BuildDate)
             .FirstOrDefault();
         return latest;
     }
 
-    public PackageRelease? FindRelease(FirebirdVersion version, ReleaseVersion packageVersion, Rid rid)
+    public PackageRelease? FindRelease(ProductId version, ReleaseVersion packageVersion, Rid rid)
     {
-        return PackageGroup(version).FirstOrDefault(r => r.PackageVersion == packageVersion && r.Rid == rid);
+        return GetProductHistory(version).History.FirstOrDefault(r => r.PackageVersion == packageVersion && r.Rid == rid);
     }
 
-    private List<PackageRelease> PackageGroup(FirebirdVersion version) =>
-        version switch
+    public PackageReleaseHistory GetProductHistory(ProductId product) =>
+        product switch
         {
-            FirebirdVersion.V3 => _v3Releases,
-            FirebirdVersion.V4 => _v4Releases,
-            FirebirdVersion.V5 => _v5Releases,
-            _ => throw new ArgumentOutOfRangeException(nameof(version), version, null)
+            ProductId.V3 => V3Releases,
+            ProductId.V4 => V4Releases,
+            ProductId.V5 => V5Releases,
+            ProductId.AssetManager => AssetManagerReleases,
+            _ => throw new ArgumentOutOfRangeException(nameof(product), product, null)
         };
-
-    private static void TryAdd(List<PackageRelease> group, PackageRelease release)
-    {
-        if (!group.Contains(release))
-        {
-            group.Add(release);
-        }
-    }
 
     public void AddRelease(PackageRelease release, bool loading = false)
     {
-        release.Metadata = this;
-
-        if (!loading)
+        switch (release.Product)
         {
-            Changed = true;
-        }
-
-        switch (release.FbVersion)
-        {
-            case FirebirdVersion.V3:
-                TryAdd(_v3Releases, release);
+            case ProductId.V3:
+                V3Releases.AddRelease(release, loading);
                 break;
-            case FirebirdVersion.V4:
-                TryAdd(_v4Releases, release);
+            case ProductId.V4:
+                V4Releases.AddRelease(release, loading);
                 break;
-            case FirebirdVersion.V5:
-                TryAdd(_v5Releases, release);
+            case ProductId.V5:
+                V5Releases.AddRelease(release, loading);
+                break;
+            case ProductId.AssetManager:
+                AssetManagerReleases.AddRelease(release, loading);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

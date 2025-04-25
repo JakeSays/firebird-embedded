@@ -9,16 +9,16 @@ internal sealed partial class PackageInfo
     public string Name { get; }
     public string Path { get; }
     public ReleaseVersion PackageVersion { get; }
-    public FirebirdVersion Version { get; }
+    public ProductId Product { get; }
     public Rid Rid { get; }
     public PackageRelease? Release { get; set; }
 
-    private PackageInfo(string path, ReleaseVersion packageVersion, FirebirdVersion version, Rid rid)
+    private PackageInfo(string path, ReleaseVersion packageVersion, ProductId product, Rid rid)
     {
         Name = System.IO.Path.GetFileNameWithoutExtension(path);
         Path = path;
         PackageVersion = packageVersion;
-        Version = version;
+        Product = product;
         Rid = rid;
     }
 
@@ -29,15 +29,15 @@ internal sealed partial class PackageInfo
         var match = PathParser.Match(packagePath);
         if (!match.Success)
         {
-            throw new InvalidOperationException($"Invalid package path '{packagePath}'");
+            return VersionOnlyParse(packagePath);
         }
 
-        var fbVersion = match.Groups["ver"].Value
+        var product = match.Groups["ver"].Value
             switch
             {
-                "3" => FirebirdVersion.V3,
-                "4" => FirebirdVersion.V4,
-                "5" => FirebirdVersion.V5,
+                "3" => ProductId.V3,
+                "4" => ProductId.V4,
+                "5" => ProductId.V5,
                 _ => throw new ArgumentOutOfRangeException(nameof(packagePath), "Invalid version")
             };
 
@@ -53,10 +53,29 @@ internal sealed partial class PackageInfo
             throw new InvalidOperationException($"Invalid package path '{packagePath}'");
         }
 
-        return new PackageInfo(packagePath, pkgVersion, fbVersion, rid);
+        return new PackageInfo(packagePath, pkgVersion, product, rid);
+    }
+
+    private static PackageInfo VersionOnlyParse(string packagePath)
+    {
+        var match = VersionOnlyPathParser.Match(packagePath);
+        if (!match.Success)
+        {
+            throw new InvalidOperationException($"Invalid package path '{packagePath}'");
+        }
+        var pkgVersion = new ReleaseVersion(
+            uint.Parse(match.Groups["major"].Value),
+            uint.Parse(match.Groups["minor"].Value),
+            uint.Parse(match.Groups["patch"].Value));
+
+        return new PackageInfo(packagePath, pkgVersion, ProductId.AssetManager, new Rid());
     }
 
     [GeneratedRegex(@"V(?<ver>\d)\.(?:[^\.]+)\.(?<platform>[^\.]+)\.(?<arch>[^\.]+)\.(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)",
         RegexOptions.Singleline | RegexOptions.Compiled)]
     private static partial Regex PathParser { get; }
+
+    [GeneratedRegex(@"\.(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)",
+        RegexOptions.Singleline | RegexOptions.Compiled)]
+    private static partial Regex VersionOnlyPathParser { get; }
 }

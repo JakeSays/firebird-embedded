@@ -13,16 +13,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FirebirdDb.Embedded.NativeAssetManager" Version="1.0.3" />
-        <PackageReference Include="FirebirdDb.Embedded.V3.NativeAssets.Linux.All" Version="1.0.4" />
-        <PackageReference Include="FirebirdDb.Embedded.V4.NativeAssets.Linux.All" Version="1.0.4" />
-        <PackageReference Include="FirebirdDb.Embedded.V5.NativeAssets.Linux.All" Version="1.0.4" />
+        <PackageReference Include="FirebirdDb.Embedded.NativeAssetManager" Version="1.0.5" />
+        <PackageReference Include="FirebirdDb.Embedded.V3.NativeAssets.Linux.All" Version="1.0.1" />
+        <PackageReference Include="FirebirdDb.Embedded.V4.NativeAssets.Linux.All" Version="1.0.1" />
+        <PackageReference Include="FirebirdDb.Embedded.V5.NativeAssets.Linux.All" Version="1.0.1" />
 
         <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.2"/>
-    </ItemGroup>
-
-    <ItemGroup>
-<!--      <ProjectReference Include="..\FirebirdDb.Embedded.NativeAssetManager\FirebirdDb.Embedded.NativeAssetManager.csproj" />-->
     </ItemGroup>
 
 </Project>

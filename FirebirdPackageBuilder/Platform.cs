@@ -4,6 +4,10 @@ internal enum Platform
 {
     Windows,
     Linux,
+    Osx,
+
+    //used only for meta packages
+    All
 }
 
 internal static class PlatformExtensions
@@ -15,6 +19,8 @@ internal static class PlatformExtensions
         {
             Platform.Windows => "win",
             Platform.Linux => "linux",
+            Platform.Osx => "osx",
+            Platform.All => "all",
             _ => throw new ArgumentOutOfRangeException(nameof(platform))
         };
 
@@ -22,9 +28,16 @@ internal static class PlatformExtensions
     {
         switch (platformString.ToLowerInvariant())
         {
+            case "all":
+                platform = Platform.All;
+                return true;
             case "win":
             case "windows":
                 platform = Platform.Windows;
+                return true;
+            case "macos":
+            case "osx":
+                platform = Platform.Osx;
                 return true;
             case "linux":
                 platform = Platform.Linux;

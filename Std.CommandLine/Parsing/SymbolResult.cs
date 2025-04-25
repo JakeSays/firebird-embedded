@@ -16,8 +16,7 @@ namespace Std.CommandLine.Parsing
         private protected readonly List<Token> _tokens = [];
         private ValidationMessages? _validationMessages;
 
-        private readonly Dictionary<IArgument, ArgumentResult> _defaultArgumentValues =
-            new Dictionary<IArgument, ArgumentResult>();
+        private readonly Dictionary<IArgument, ArgumentResult> _defaultArgumentValues = [];
 
         private protected SymbolResult(ISymbol symbol,
             SymbolResult? parent)
@@ -63,7 +62,7 @@ namespace Std.CommandLine.Parsing
         internal bool UseDefaultValueFor(IArgument argument) =>
             this switch
             {
-                OptionResult optionResult when optionResult.IsImplicit => true,
+                OptionResult { IsImplicit: true } => true,
                 CommandResult _ when Children.ResultFor(argument)?.Tokens.Count == 0 => true,
                 _ => false
             };

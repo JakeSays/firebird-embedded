@@ -1,3 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
+using NuGet.Versioning;
+
+
 namespace Std.FirebirdEmbedded.Tools;
 
 internal enum VersionStyle
@@ -11,12 +15,13 @@ internal readonly record struct ReleaseVersion(
     uint Minor,
     uint Patch,
     uint Build = 0,
-    uint Revision = 0
+    uint Revision = 0,
+    VersionStyle DisplayStyle = VersionStyle.Firebird
 ) : IComparable<ReleaseVersion>, IComparable
 {
     public static readonly ReleaseVersion Nil = new ();
 
-    public override string ToString() => ToString(VersionStyle.Firebird);
+    public override string ToString() => ToString(DisplayStyle);
 
     public string ToString(VersionStyle style) =>
         style switch
@@ -26,12 +31,15 @@ internal readonly record struct ReleaseVersion(
             _ => throw new ArgumentOutOfRangeException(nameof(style), style, null)
         };
 
-//    public string AsNugetVersion(bool prerelease) => $"{Major}.{Minor}.{Patch}-{(prerelease ? $"pre{Revision}" : Revision)}";
+    public NuGetVersion AsNuGetVersion() => new ((int)Major, (int)Minor, (int)Patch);
 
-    public ReleaseVersion NextMajorVersion() =>
+    public ReleaseVersion NextMajorVersion(bool resetPatch = false) =>
         this with
         {
-            Major = Major + 1
+            Major = Major + 1,
+            Patch = resetPatch
+                ? 0
+                : Patch
         };
 
     public ReleaseVersion NextPatchVersion() =>
@@ -46,12 +54,21 @@ internal readonly record struct ReleaseVersion(
         {
             throw new FormatException($"Invalid version format: {value}");
         }
-        return (ReleaseVersion) version!;
+        return version;
     }
 
-    public static bool TryParse(string value, out ReleaseVersion? releaseVersion, VersionStyle style = VersionStyle.Firebird)
+    public static bool TryParse(
+        [NotNullWhen(true)] string? value,
+        out ReleaseVersion releaseVersion,
+        VersionStyle style = VersionStyle.Firebird)
     {
-        releaseVersion = null;
+        releaseVersion = Nil;
+
+        if (value == null)
+        {
+            return false;
+        }
+
         var parts = value.Split('.');
 
         if (parts.Length < 3)
@@ -132,6 +149,8 @@ internal readonly record struct ReleaseVersion(
             ? CompareTo(other)
             : throw new ArgumentException($"Object must be of type {nameof(ReleaseVersion)}");
     }
+
+    public static implicit operator bool(ReleaseVersion version) => version != Nil;
 
     public static bool operator <(ReleaseVersion left, ReleaseVersion right) => left.CompareTo(right) < 0;
 
