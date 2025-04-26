@@ -38,7 +38,7 @@ public static class FbNativeAssetManager
             }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                return "lib/fbclient.dylib";
+                return "lib/libfbclient.dylib";
             }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
@@ -113,7 +113,7 @@ public static class FbNativeAssetManager
             var arch = RuntimeInformation.OSArchitecture == Architecture.X64
                 ? "x64"
                 : "arm64";
-            var rid = $"macos-{arch}";
+            var rid = $"osx-{arch}";
             return Path.Combine(intermediateDir, rid);
         }
 
