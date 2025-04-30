@@ -47,7 +47,7 @@ internal class BuildManager : Tool<BuildConfiguration, bool, BuildResults>
             return false;
         }
 
-        if (!BuildAssetManager())
+        if (!generateTemplatesOnly && !BuildAssetManager())
         {
             return false;
         }

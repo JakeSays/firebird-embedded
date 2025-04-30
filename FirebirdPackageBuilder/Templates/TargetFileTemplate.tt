@@ -3,14 +3,72 @@
 <#@ namespace name="Std.FirebirdEmbedded.Tools.Templates" #>
 <#@ parameter name="Assets" type="Std.FirebirdEmbedded.Tools.FirebirdAsset[]" #>
 <#@ parameter name="Release" type="Std.FirebirdEmbedded.Tools.FirebirdRelease" #>
+<#@ parameter name="TargetPlatform" type="Std.FirebirdEmbedded.Tools.Platform"#>
 <#@ parameter name="Tfm" type="System.String" #>
 <#@ import namespace="Std.FirebirdEmbedded.Tools" #>
 <?xml version="1.0" encoding="UTF-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
     <Target Name="CleanFirebirdBinaries" AfterTargets="Clean">
         <RemoveDir Directories="$(TargetDir)firebird"/>
     </Target>
+<#
+    if (TargetPlatform == Platform.Osx)
+    {
+#>
+    <UsingTask TaskName="MakeSymLinks"
+               TaskFactory="RoslynCodeTaskFactory"
+               AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll" >
+        <ParameterGroup>
+            <BaseDir ParameterType="System.String" Required="True"/>
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System"/>
+            <Using Namespace="System.IO"/>
+
+            <Code Type="Fragment" Language="cs">
+<![CDATA[
+    if (MakeLink(BaseDir, "libicudata.dylib", "libicudata.71.1.dylib") &&
+        MakeLink(BaseDir, "libicudata.71.dylib", "libicudata.71.1.dylib") &&
+        MakeLink(BaseDir, "libicui18n.dylib", "libicui18n.71.1.dylib") &&
+        MakeLink(BaseDir, "libicui18n.71.dylib", "libicui18n.71.1.dylib") &&
+        MakeLink(BaseDir, "libicuuc.dylib", "libicuuc.71.1.dylib") &&
+        MakeLink(BaseDir, "libicuuc.71.dylib", "libicuuc.71.1.dylib"))
+        {
+            Log.LogMessage(MessageImportance.Normal, "Links created");
+        }
+
+    static bool MakeLink(string baseDir, string linkFile, string targetFile)
+    {
+        var linkPath = Path.Combine(baseDir, linkFile);
+        try
+        {
+            var linkFile = new FileInfo(linkPath);
+            if (linkFile.Exists)
+            {
+                if (linkFile.LinkTarget != null && Path.GetFileName(linkFile.LinkTarget) == targetFile)
+                {
+                    return true;
+                }
+                linkFile.Delete();
+            }
+
+            var targetPath = Path.Combine(baseDir, targetFile);
+            File.CreateSymbolicLink(linkPath, targetPath);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.LogErrorFromException(ex, false, false, linkPath);
+            return false;
+        }
+]]>
+            </Code>
+        </Task>
+    </UsingTask>
+<#
+    }
+#>
 <#
   foreach (var asset in Assets)
   {
@@ -52,6 +110,14 @@
                 <Visible>false</Visible>
                 <Pack>false</Pack>
             </Content>
+<#
+    if (TargetPlatform == Platform.Osx)
+    {
+#>
+            <MakeSymLinks BaseDir="$(TargetDir)firebird/<#=pkgp#>lib"/>
+<#
+    }
+#>
         </ItemGroup>
     </Target>
 <#

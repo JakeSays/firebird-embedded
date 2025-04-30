@@ -98,6 +98,11 @@ internal sealed class PackagePublisher : Tool<PublishConfiguration, List<string>
 
             foreach (var package in packages)
             {
+                if (package.Rid.Platform == Platform.Osx)
+                {
+                    StdOut.YellowLine($"Skipping OSX package {package.Name}");
+                    continue;
+                }
                 var startTime = DateTimeOffset.Now;
                 if (ConsoleConfig.IsNormal)
                 {

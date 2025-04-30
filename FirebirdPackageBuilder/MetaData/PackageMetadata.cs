@@ -31,9 +31,9 @@ internal sealed class PackageMetadata
         return latest;
     }
 
-    public PackageRelease? FindRelease(ProductId version, ReleaseVersion packageVersion, Rid rid)
+    public PackageRelease? FindRelease(ProductId product, ReleaseVersion packageVersion, Rid rid)
     {
-        return GetProductHistory(version).History.FirstOrDefault(r => r.PackageVersion == packageVersion && r.Rid == rid);
+        return GetProductHistory(product).History.FirstOrDefault(r => r.PackageVersion == packageVersion && r.Rid == rid);
     }
 
     public PackageReleaseHistory GetProductHistory(ProductId product) =>

@@ -68,7 +68,7 @@ internal sealed partial class PackageInfo
             uint.Parse(match.Groups["minor"].Value),
             uint.Parse(match.Groups["patch"].Value));
 
-        return new PackageInfo(packagePath, pkgVersion, ProductId.AssetManager, new Rid());
+        return new PackageInfo(packagePath, pkgVersion, ProductId.AssetManager, new Rid(Platform.All));
     }
 
     [GeneratedRegex(@"V(?<ver>\d)\.(?:[^\.]+)\.(?<platform>[^\.]+)\.(?<arch>[^\.]+)\.(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)",

@@ -103,7 +103,7 @@ internal static class Program
                     .Alias("-m|--metadata")
                     .Name("MetadataFile")
                     .Singleton()
-                    .Description("Path to the metadata file. Defaults to <repo root>/version-info.xml")
+                    .Description("Path to the metadata file. Defaults to <repo root>/release-info.xml")
                 )
                 .Option<BuildType>(o => o
                     .Alias("-t|--type")
@@ -169,7 +169,7 @@ internal static class Program
                     .Alias("-m|--metadata")
                     .Name("MetadataFile")
                     .Singleton()
-                    .Description("Path to the metadata file. Defaults to <repo root>/version-info.xml")
+                    .Description("Path to the metadata file. Defaults to <repo root>/release-info.xml")
                 )
                 .Option<string>(o => o
                     .Alias("-k|--apikey")
@@ -266,6 +266,15 @@ internal static class Program
 
     private static PublishStatus PublishCommon(PublishArgs args)
     {
+        if (args.PackageDir == null)
+        {
+            if (args.RepositoryRoot == null)
+            {
+                StdErr.RedLine("Repository root required.");
+                return PublishStatus.Failed;
+            }
+            args.PackageDir = Path.Combine(args.RepositoryRoot!, "workspace/output");
+        }
         if (!Directory.Exists(args.PackageDir))
         {
             StdErr.RedLine($"Package directory '{args.PackageDir}' does not exist.");

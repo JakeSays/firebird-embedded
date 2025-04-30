@@ -6,6 +6,7 @@ internal partial class TargetFileTemplate
     {
         Release = asset.Release;
         Assets = [asset];
+        TargetPlatform = asset.Platform;
 
         return DoGenerate(asset, tfm, transitive);
     }
@@ -14,6 +15,7 @@ internal partial class TargetFileTemplate
     {
         Release = packageDetails.Release;
         Assets = assets;
+        TargetPlatform = assets[0].Platform;
 
         return DoGenerate(packageDetails, tfm, transitive);
     }

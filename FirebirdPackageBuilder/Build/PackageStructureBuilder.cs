@@ -142,20 +142,20 @@ internal sealed class PackageStructureBuilder
         }
     }
 
-    private void CopyFile(FirebirdAsset asset, string fileName, string destRootDirectory)
+    private void CopyFile(FirebirdAsset asset, string fileName, string destRootDirectory, string? fileNameOverride = null)
     {
         if (ConsoleConfig.IsNaggy)
         {
-            StdOut.DarkGreenLine($"Copying file '{fileName}' to '{destRootDirectory}'");
+            StdOut.DarkGreenLine($"Copying file '{fileName}' to '{destRootDirectory}'{(fileNameOverride != null ? $"/{fileNameOverride}" : "")}");
         }
 
         var sourcePath = Path.Combine(asset.UnpackedDirectory, fileName);
-        var destPath = Path.Combine(destRootDirectory, fileName);
+        var destPath = Path.Combine(destRootDirectory, fileNameOverride ?? fileName);
 
         Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
         File.Copy(sourcePath, destPath, true);
 
-        asset.NugetFiles.Add(new NugetFile(NugetDestination.Runtime, fileName));
+        asset.NugetFiles.Add(new NugetFile(NugetDestination.Runtime, fileNameOverride ?? fileName));
     }
 
     private void CopyLicenses(IPackageDetails details, List<NugetFile> nugetFiles, string destRootDirectory)
@@ -201,6 +201,8 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "lib/libib_util.so", destRootDirectory);
         CopyFile(asset, "lib/libfbclient.so.2", destRootDirectory);
         CopyFile(asset, "plugins/libEngine12.so", destRootDirectory);
+        CopyFile(asset, "intl/fbintl", destRootDirectory);
+        CopyFile(asset, "intl/fbintl.conf", destRootDirectory);
     }
 
     private void CreateV4LinuxStructure(FirebirdAsset asset, string destRootDirectory)
@@ -209,6 +211,8 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "lib/libfbclient.so.2", destRootDirectory);
         CopyFile(asset, "lib/libtomcrypt.so.1", destRootDirectory);
         CopyFile(asset, "plugins/libEngine13.so", destRootDirectory);
+        CopyFile(asset, "intl/fbintl", destRootDirectory);
+        CopyFile(asset, "intl/fbintl.conf", destRootDirectory);
 
         CopyTzData(asset, destRootDirectory);
     }
@@ -219,7 +223,8 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "lib/libfbclient.so.2", destRootDirectory);
         CopyFile(asset, "lib/libtomcrypt.so.1", destRootDirectory);
         CopyFile(asset, "plugins/libEngine13.so", destRootDirectory);
-
+        CopyFile(asset, "intl/fbintl", destRootDirectory);
+        CopyFile(asset, "intl/fbintl.conf", destRootDirectory);
         CopyTzData(asset, destRootDirectory);
     }
 
@@ -227,9 +232,9 @@ internal sealed class PackageStructureBuilder
     {
         CopyFile(asset, "lib/libfbclient.dylib", destRootDirectory);
         CopyFile(asset, "lib/libib_util.dylib", destRootDirectory);
-        CopyFile(asset, "lib/libicudata.71.1.dylib", destRootDirectory);
-        CopyFile(asset, "lib/libicui18n.71.1.dylib", destRootDirectory);
-        CopyFile(asset, "lib/libicuuc.71.1.dylib", destRootDirectory);
+        CopyFile(asset, "lib/libicudata.71.1.dylib", destRootDirectory, "lib/libicudata.71.dylib");
+        CopyFile(asset, "lib/libicui18n.71.1.dylib", destRootDirectory, "lib/libicui18n.71.dylib");
+        CopyFile(asset, "lib/libicuuc.71.1.dylib", destRootDirectory, "lib/libicuuc.71.dylib");
         CopyFile(asset, "lib/libtomcrypt.dylib", destRootDirectory);
         CopyFile(asset, "lib/libtommath.dylib", destRootDirectory);
         CopyFile(asset, "plugins/libEngine13.dylib", destRootDirectory);
@@ -248,6 +253,8 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "msvcp100.dll", destRootDirectory);
         CopyFile(asset, "msvcr100.dll", destRootDirectory);
         CopyFile(asset, "zlib1.dll", destRootDirectory);
+        CopyFile(asset, "intl/fbintl.dll", destRootDirectory);
+        CopyFile(asset, "intl/fbintl.conf", destRootDirectory);
         CopyFile(asset, "plugins/engine12.dll", destRootDirectory);
     }
 
@@ -262,6 +269,8 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "msvcp140.dll", destRootDirectory);
         CopyFile(asset, "vcruntime140.dll", destRootDirectory);
         CopyFile(asset, "zlib1.dll", destRootDirectory);
+        CopyFile(asset, "intl/fbintl.dll", destRootDirectory);
+        CopyFile(asset, "intl/fbintl.conf", destRootDirectory);
         CopyFile(asset, "plugins/engine13.dll", destRootDirectory);
 
         CopyTzData(asset, destRootDirectory, true);
@@ -277,6 +286,8 @@ internal sealed class PackageStructureBuilder
         CopyFile(asset, "icuuc63.dll", destRootDirectory);
         CopyFile(asset, "msvcp140.dll", destRootDirectory);
         CopyFile(asset, "vcruntime140.dll", destRootDirectory);
+        CopyFile(asset, "intl/fbintl.dll", destRootDirectory);
+        CopyFile(asset, "intl/fbintl.conf", destRootDirectory);
 
         if (asset.Architecture == Architecture.X64)
         {
