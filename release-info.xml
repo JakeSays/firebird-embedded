@@ -1,35 +1,58 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <VersionInfo>
   <ReleaseHistory Product="AssetManager" CurrentPackageVersion="1.0.6">
-    <Release Rid="all-all" PackageVersion="1.0.6" PublishDate="2025-04-30T06:10:00.000-06:00" BuildDate="2025-04-30T05:44:48.572-06:00" />
+    <Release Rid="all-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" />
   </ReleaseHistory>
-  <ReleaseHistory Product="V3" CurrentPackageVersion="1.0.6" CurrentAssetVersion="3.0.12.33787-0">
-    <Release Rid="linux-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="3.0.12.33787-0" />
-    <Release Rid="win-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="3.0.12.33787-0" />
-    <Release Rid="win-x86" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="3.0.12.33787-0" />
-    <Release Rid="win-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="3.0.12.33787-0" />
-    <Release Rid="linux-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="3.0.12.33787-0" />
-    <Release Rid="linux-x32" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="3.0.12.33787-0" />
+  <ReleaseHistory Product="V3" CurrentPackageVersion="2.0.6" CurrentAssetVersion="3.0.13.33818-0">
+    <Release Rid="linux-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="3.0.12.33787-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="win-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="3.0.12.33787-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="win-x86" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="3.0.12.33787-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="win-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="3.0.12.33787-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="linux-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="3.0.12.33787-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="linux-x32" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="3.0.12.33787-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="linux-all" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="3.0.13.33818-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="win-all" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="3.0.13.33818-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="win-x86" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="3.0.13.33818-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="win-x64" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="3.0.13.33818-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="linux-x64" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="3.0.13.33818-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="linux-x32" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="3.0.13.33818-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
   </ReleaseHistory>
-  <ReleaseHistory Product="V4" CurrentPackageVersion="1.0.6" CurrentAssetVersion="4.0.5.3140-0">
-    <Release Rid="linux-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="4.0.5.3140-0" />
-    <Release Rid="win-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="4.0.5.3140-0" />
-    <Release Rid="win-x86" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="4.0.5.3140-0" />
-    <Release Rid="win-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="4.0.5.3140-0" />
-    <Release Rid="linux-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="4.0.5.3140-0" />
-    <Release Rid="linux-x32" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="4.0.5.3140-0" />
+  <ReleaseHistory Product="V4" CurrentPackageVersion="2.0.6" CurrentAssetVersion="4.0.6.3221-0">
+    <Release Rid="linux-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="4.0.5.3140-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="win-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="4.0.5.3140-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="win-x86" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="4.0.5.3140-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="win-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="4.0.5.3140-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="linux-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="4.0.5.3140-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="linux-x32" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="4.0.5.3140-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="linux-all" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="4.0.6.3221-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="win-all" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="4.0.6.3221-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="win-x86" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="4.0.6.3221-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="win-x64" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="4.0.6.3221-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="linux-x64" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="4.0.6.3221-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="linux-x32" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="4.0.6.3221-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
   </ReleaseHistory>
-  <ReleaseHistory Product="V5" CurrentPackageVersion="1.0.6" CurrentAssetVersion="5.0.2.1613-0">
-    <Release Rid="linux-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="5.0.2.1613-0" />
-    <Release Rid="win-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="5.0.2.1613-0" />
+  <ReleaseHistory Product="V5" CurrentPackageVersion="2.0.6" CurrentAssetVersion="5.0.3.1683-0">
+    <Release Rid="linux-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="win-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
     <Release Rid="osx-all" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" />
-    <Release Rid="linux-arm" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="5.0.2.1613-0" />
-    <Release Rid="linux-arm64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="5.0.2.1613-0" />
-    <Release Rid="linux-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="5.0.2.1613-0" />
-    <Release Rid="linux-x32" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="5.0.2.1613-0" />
+    <Release Rid="linux-arm" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="linux-arm64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="linux-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="linux-x32" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
     <Release Rid="osx-arm64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" />
     <Release Rid="osx-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" />
-    <Release Rid="win-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="5.0.2.1613-0" />
-    <Release Rid="win-x86" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" PublishDate="2025-04-30T06:10:00.000-06:00" NativeAssetsVersion="5.0.2.1613-0" />
+    <Release Rid="win-x64" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="win-x86" PackageVersion="1.0.6" BuildDate="2025-04-30T05:44:48.572-06:00" NativeAssetsVersion="5.0.2.1613-0" PublishDate="2025-04-30T06:10:00.000-06:00" />
+    <Release Rid="linux-all" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="win-all" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="osx-all" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" />
+    <Release Rid="linux-arm" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="linux-arm64" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="linux-x64" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="linux-x32" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="osx-arm64" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" />
+    <Release Rid="osx-x64" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" />
+    <Release Rid="win-x64" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
+    <Release Rid="win-x86" PackageVersion="2.0.6" BuildDate="2025-07-18T18:38:07.117-06:00" NativeAssetsVersion="5.0.3.1683-0" PublishDate="2025-07-18T18:38:07.117-06:00"/>
   </ReleaseHistory>
 </VersionInfo>
